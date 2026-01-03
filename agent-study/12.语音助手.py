@@ -7,12 +7,15 @@
 """
 import json
 import tempfile
+import io
+import os
 
 import dotenv
 import keyboard
 import numpy as np
 import sounddevice as sd
 import soundfile as sf
+import requests
 from openai import OpenAI
 
 dotenv.load_dotenv()
@@ -163,41 +166,123 @@ class ReActAgent:
             return ""
 
         audio_data = np.concatenate(recording, axis=0)
+        print(f"[DEBUG] 音频数据形状: {audio_data.shape}")
+        print(f"[DEBUG] 音频时长: {len(audio_data) / samplerate:.2f} 秒")
 
-        # 保存到临时文件
-        with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmpfile:
-            sf.write(tmpfile.name, audio_data, samplerate)
-            audio_path = tmpfile.name
+        # 保存到临时文件 - 使用WAV格式确保兼容性
+        audio_path = tempfile.mktemp(suffix=".wav")
+        print(f"[DEBUG] 临时文件路径: {audio_path}")
+        
+        # 使用soundfile写入音频文件，指定格式和子类型
+        sf.write(audio_path, audio_data, samplerate, format='WAV', subtype='PCM_16')
+        print(f"[DEBUG] 音频文件已写入")
+        
+        # 检查文件大小
+        file_size = os.path.getsize(audio_path)
+        print(f"[DEBUG] 音频文件大小: {file_size} 字节")
+        
+        if file_size < 100:
+            print(f"[ERROR] 音频文件太小，可能录音失败")
+            try:
+                os.remove(audio_path)
+            except:
+                pass
+            return ""
 
         # 调用 OpenAI API 语音转文本
-        with open(audio_path, "rb") as audio_file:
-            client = OpenAI()
-            transcript = client.audio.transcriptions.create(
-                model="whisper-1",
-                file=audio_file
-            )
+        try:
+            print(f"[DEBUG] 开始调用语音转文本API...")
+            client = OpenAI(timeout=60.0)  # 增加超时时间
 
-        return transcript.text
+            # 方法1: 使用元组方式传递文件（推荐）
+            with open(audio_path, "rb") as f:
+                audio_bytes = f.read()
+            print(f"[DEBUG] 读取音频内容大小: {len(audio_bytes)} 字节")
+
+            # 使用元组格式 (filename, file_content, content_type)
+            files = ("audio.wav", audio_bytes, "audio/wav")
+
+            print(f"[DEBUG] 准备发送到Whisper API...")
+            transcript = client.audio.translations.create(
+                model="whisper-1",
+                file=files
+            )
+            print(f"[DEBUG] 转录成功: {transcript.text}")
+            return transcript.text
+
+        except Exception as e:
+            print(f"[ERROR] 语音转文本失败: {str(e)}")
+            print(f"[ERROR] 错误类型: {type(e).__name__}")
+            import traceback
+            traceback.print_exc()
+
+            # 尝试备用方案：直接使用 BytesIO
+            try:
+                print(f"[DEBUG] 尝试备用方案...")
+                audio_file = io.BytesIO(audio_bytes)
+                audio_file.name = "audio.wav"
+
+                transcript = client.audio.translations.create(
+                    model="whisper-1",
+                    file=audio_file
+                )
+                print(f"[DEBUG] 备用方案成功: {transcript.text}")
+                return transcript.text
+            except Exception as e2:
+                print(f"[ERROR] 备用方案也失败: {str(e2)}")
+                traceback.print_exc()
+                return ""
+        finally:
+            # 清理临时文件
+            try:
+                if os.path.exists(audio_path):
+                    os.remove(audio_path)
+                    print(f"[DEBUG] 临时文件已删除")
+            except Exception as e:
+                print(f"[WARNING] 删除临时文件失败: {e}")
 
     @classmethod
     def text_to_speech(cls, text: str) -> None:
         # 调用 OpenAI TTS 生成语音
-        client = OpenAI()
-        response = client.audio.speech.create(
-            model="tts-1",  # 文本转语音模型
-            voice="alloy",  # 可选：alloy, verse, etc.
-            input=text
-        )
+        try:
+            print(f"[DEBUG] 开始文本转语音，文本长度: {len(text)}")
+            client = OpenAI(timeout=60.0)
+            response = client.audio.speech.create(
+                model="tts-1",
+                voice="alloy",
+                input=text,
+                response_format="mp3"  # 明确指定格式
+            )
+            print(f"[DEBUG] TTS API调用成功")
 
-        # 保存临时文件
-        with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmpfile:
-            tmpfile.write(response.read())
-            audio_path = tmpfile.name
+            # 保存临时文件
+            audio_path = tempfile.mktemp(suffix=".mp3")
+            audio_content = response.content  # 使用content属性更可靠
+            print(f"[DEBUG] 语音内容大小: {len(audio_content)} 字节")
+            
+            with open(audio_path, "wb") as f:
+                f.write(audio_content)
+            print(f"[DEBUG] 语音文件已保存: {audio_path}")
 
-        # 播放语音
-        data, samplerate = sf.read(audio_path)
-        sd.play(data, samplerate)
-        sd.wait()  # 等待播放完成
+            # 播放语音
+            print(f"[DEBUG] 开始播放语音...")
+            data, samplerate = sf.read(audio_path)
+            sd.play(data, samplerate)
+            sd.wait()
+            print(f"[DEBUG] 语音播放完成")
+            
+            # 清理临时文件
+            try:
+                if os.path.exists(audio_path):
+                    os.remove(audio_path)
+                    print(f"[DEBUG] 语音临时文件已删除")
+            except Exception as e:
+                print(f"[WARNING] 删除语音文件失败: {e}")
+                
+        except Exception as e:
+            print(f"[ERROR] 文本转语音失败: {str(e)}")
+            import traceback
+            traceback.print_exc()
 
 
 if __name__ == "__main__":
