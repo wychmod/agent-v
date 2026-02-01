@@ -1,0 +1,34 @@
+{
+  "recommendations": [
+    // Python 核心支持
+    "ms-python.python",
+    "ms-python.vscode-pylance",
+    
+    // Ruff - 快速的 Python linter 和 formatter
+    "charliermarsh.ruff",
+    
+    // Python 环境管理
+    "ms-python.debugpy",
+    
+    // Pydantic 支持 (FastAPI 依赖)
+    "ms-python.mypy-type-checker",
+    
+    // REST API 开发
+    "humao.rest-client",
+    
+    // TOML 支持 (pyproject.toml)
+    "tamasfe.even-better-toml",
+    
+    // Docker 支持
+    "ms-azuretools.vscode-docker",
+    
+    // GitLens - Git 增强
+    "eamodio.gitlens",
+    
+    // 括号着色
+    "oderwat.indent-rainbow",
+    
+    // 错误高亮
+    "usernamehw.errorlens"
+  ]
+}
