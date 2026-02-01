@@ -1,4 +1,6 @@
-from pydantic import BaseModel
+from typing import Never
+
+from pydantic import BaseModel, ConfigDict
 
 
 class Response[T](BaseModel):
@@ -8,20 +10,19 @@ class Response[T](BaseModel):
 
     code: int = 200
     message: str = "success"
-    data: T | None = None
+    data: T | dict[Never, Never]
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
-    @classmethod
-    def success[T](data: T | None = None, message: str = "success") -> "Response[T]":
+    @staticmethod
+    def success(data: T | None = None, message: str = "success") -> "Response[T]":
         """
         成功响应便捷函数
         """
         return Response(code=200, message=message, data=data if data else {})
 
-    @classmethod
-    def fail[T](
+    @staticmethod
+    def fail(
         code: int = 400, message: str = "error", data: T | None = None
     ) -> "Response[T]":
         """
