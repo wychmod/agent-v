@@ -14,7 +14,9 @@ class Settings(BaseSettings):
     app_config_filepath: str = "config.yaml"
 
     # 数据库相关配置
-    sqlalchemy_database_uri: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/manus"
+    sqlalchemy_database_uri: str = (
+        "postgresql+asyncpg://postgres:postgres@localhost:5432/manus"
+    )
 
     # Redis缓存配置
     redis_host: str = "localhost"
@@ -31,9 +33,7 @@ class Settings(BaseSettings):
     cos_domain: str = ""
 
     model_config = SettingsConfigDict(
-        env_file=".env",
-        env_file_encoding="utf-8",
-        extra="ignore"
+        env_file=".env", env_file_encoding="utf-8", extra="ignore"
     )
 
 
@@ -42,5 +42,7 @@ settings = Settings()
 
 @lru_cache
 def get_settings() -> Settings:
-    """获取当前MoocManus项目的配置信息，并对内容进行缓存，避免重复读取"""
+    """
+    获取当前项目的配置信息
+    """
     return Settings()
