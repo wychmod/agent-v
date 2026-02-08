@@ -1,4 +1,4 @@
-from typing import Never
+from typing import Any, Never
 
 from pydantic import BaseModel, ConfigDict
 
@@ -10,7 +10,7 @@ class Response[T](BaseModel):
 
     code: int = 200
     message: str = "success"
-    data: T | dict[Never, Never]
+    data: T | dict[Any, Any]
 
     model_config = ConfigDict(from_attributes=True)
 
