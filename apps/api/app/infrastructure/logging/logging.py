@@ -1,35 +1,64 @@
 import logging
+import logging.config
 import sys
+from typing import Any
 
 from core.config import get_settings
 
 
 def setup_logging():
     """
-    配置_logging模块，设置项目日志格式和输出级别
+    配置 logging 模块，设置项目日志格式和输出级别。
+
     """
-    # 1. 获取项目配置
     settings = get_settings()
 
-    # 2. 获取根日志处理器
-    root_logger = logging.getLogger()
+    # 1. 验证日志级别
+    log_level = settings.log_level.upper()
+    valid_levels = {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}
+    if log_level not in valid_levels:
+        log_level = "INFO"
 
-    # 3.设置根日志处理器等级
-    log_level = getattr(logging, settings.log_level)
-    root_logger.setLevel(log_level)
+    # 2. 根据环境定义日志格式
+    if settings.env == "development":
+        # 开发模式：包含更多调试信息（文件名、行号）
+        log_format = "%(asctime)s - %(name)s - %(levelname)s - [%(filename)s:%(lineno)d] - %(message)s"
+    else:
+        # 生产模式：保持简洁
+        log_format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 
-    # 4.日志输出格式定义
-    formatter = logging.Formatter(
-        "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S",
-    )
+    # 3. 构造配置字典
+    logging_config: dict[str, Any] = {
+        "version": 1,
+        "disable_existing_loggers": False,
+        "formatters": {
+            "default": {
+                "format": log_format,
+                "datefmt": "%Y-%m-%d %H:%M:%S",
+            },
+        },
+        "handlers": {
+            "console": {
+                "class": "logging.StreamHandler",
+                "level": log_level,
+                "formatter": "default",
+                "stream": sys.stdout,
+            },
+        },
+        "loggers": {
+            # 根配置
+            "": {
+                "handlers": ["console"],
+                "level": log_level,
+            },
+            # 可选：对特定库进行精细控制
+            # "uvicorn.error": {"level": "INFO"},
+            # "sqlalchemy.engine": {"level": "WARNING"},
+        },
+    }
 
-    # 5. 创建控制台日志处理器
-    console_handler = logging.StreamHandler(sys.stdout)
-    console_handler.setFormatter(formatter)
-    root_logger.addHandler(console_handler)
+    # 4. 应用配置
+    logging.config.dictConfig(logging_config)
 
-    # 6.将控制台日志处理器添加到根日志处理器中
-    root_logger.addHandler(console_handler)
-
-    root_logger.info("日志系统初始化完成")
+    logger = logging.getLogger(__name__)
+    logger.info(f"日志系统初始化完成 [环境: {settings.env}, 级别: {log_level}]")
