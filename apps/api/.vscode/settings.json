@@ -17,9 +17,7 @@
       "source.organizeImports": "explicit"
     }
   },
-  
-  // Ruff 配置
-  "ruff.lint.args": ["--select=E,F,W,I,UP"],
+
   
   // 编辑器配置
   "editor.rulers": [88, 120],
