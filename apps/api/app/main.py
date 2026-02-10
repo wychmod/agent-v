@@ -11,6 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.infrastructure.logging import setup_logging
 from app.interfaces.endpoints.routes import router
+from app.interfaces.errors.exception_handles import register_exception_handlers
 from core.config import get_settings
 
 # 加载应用配置
@@ -70,5 +71,9 @@ app.add_middleware(
     allow_methods=["*"],  # 允许所有HTTP方法
     allow_headers=["*"],  # 允许所有HTTP头
 )
+
+# 注册异常处理
+register_exception_handlers(app)
+
 # 注册应用路由，所有API端点均在/api前缀下
 app.include_router(router, prefix="/api")
