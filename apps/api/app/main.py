@@ -10,6 +10,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.infrastructure.logging import setup_logging
+from app.infrastructure.storage.mysql import get_mysql_client
 from app.infrastructure.storage.redis import get_redis_client
 from app.interfaces.endpoints.routes import router
 from app.interfaces.errors.exception_handles import register_exception_handlers
@@ -50,9 +51,10 @@ async def lifespan(app: FastAPI):
     try:
         logger.info("wychmod agent正在启动")
         await get_redis_client().init()
+        await get_mysql_client().init()
         yield
     finally:
-
+        await get_mysql_client().shutdown()
         await get_redis_client().shutdown()
         logger.info("wychmod agent正在关闭")
 
