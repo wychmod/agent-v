@@ -5,6 +5,7 @@
   // 代码分析 - 使用 Pylance
   "python.analysis.typeCheckingMode": "basic",
   "python.analysis.autoImportCompletions": true,
+  "python.analysis.autoImportCompletions.showAutomaticAliases": true,
   "python.analysis.inlayHints.functionReturnTypes": true,
   "python.analysis.inlayHints.variableTypes": true,
   
