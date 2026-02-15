@@ -32,3 +32,4 @@ dist/
 build/
 *.egg-info/
 apps/api/.qoder
+apps/api/alembic.ini
