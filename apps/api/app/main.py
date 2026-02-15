@@ -10,6 +10,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.infrastructure.logging import setup_logging
+from app.infrastructure.storage.cos import get_cos
 from app.infrastructure.storage.mysql import get_mysql_client
 from app.infrastructure.storage.redis import get_redis_client
 from app.interfaces.endpoints.routes import router
@@ -52,8 +53,10 @@ async def lifespan(app: FastAPI):
         logger.info("wychmod agent正在启动")
         await get_redis_client().init()
         await get_mysql_client().init()
+        await get_cos().init()
         yield
     finally:
+        await get_cos().shutdown()
         await get_mysql_client().shutdown()
         await get_redis_client().shutdown()
         logger.info("wychmod agent正在关闭")
@@ -67,7 +70,6 @@ app = FastAPI(
     openapi_tags=openapi_tags,
     version="1.0.0",
 )
-
 
 # 配置CORS中间件，允许跨域访问
 app.add_middleware(
