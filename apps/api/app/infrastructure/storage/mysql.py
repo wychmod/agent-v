@@ -62,7 +62,7 @@ class MySQLClient:
             logger.info("初始化 MySQL 连接")
             self._engine = create_async_engine(
                 self._settings.sqlalchemy_database_uri,
-                echo=True if self._settings.env == "development" else False,
+                echo=self._settings.env == "development",
             )
             self._session = async_sessionmaker(
                 self._engine,
