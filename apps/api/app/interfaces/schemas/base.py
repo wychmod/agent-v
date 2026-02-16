@@ -1,8 +1,3 @@
-"""基础响应模型定义
-
-定义API接口的通用响应结构，包括成功和失败响应的标准格式。
-"""
-
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict
