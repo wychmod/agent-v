@@ -1,4 +1,3 @@
-
 import json
 
 import dotenv
@@ -83,8 +82,10 @@ class ReActAgent:
                 for chunk_tool_call in chunk_tool_calls:
                     if tool_calls_obj.get(chunk_tool_call.index) is None:
                         tool_calls_obj[chunk_tool_call.index] = chunk_tool_call
-                    elif chunk_tool_call.function.arguments is not None:
-                        tool_calls_obj[chunk_tool_call.index].function.arguments += chunk_tool_call.function.arguments
+                    elif chunk_tool_call.function is not None and chunk_tool_call.function.arguments is not None:
+                        existing_func = tool_calls_obj[chunk_tool_call.index].function
+                        if existing_func is not None:
+                            existing_func.arguments += chunk_tool_call.function.arguments
 
             # 如果是直接生成则流式打印输出的内容
             if chunk_content:
@@ -108,8 +109,11 @@ class ReActAgent:
         if is_tool_calls:
             # 循环调用对应的工具
             for tool_call in tool_calls_json:
-                tool_name = tool_call.function.name
-                tool_args = json.loads(tool_call.function.arguments)
+                func = tool_call.function
+                if func is None or func.name is None or func.arguments is None:
+                    continue
+                tool_name = func.name
+                tool_args = json.loads(func.arguments)
                 print("\nTool Call: ", tool_name)
                 print("Tool Parameters: ", tool_args)
                 function_to_call = self.available_tools[tool_name]

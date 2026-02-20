@@ -1,10 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-"""
-@Time    : 2025/7/6 18:17
-@Author  : thezehui@gmail.com
-@File    : 3_11_DeepSeek语音播报助手.py
-"""
 import json
 import tempfile
 import io
@@ -172,15 +165,15 @@ class ReActAgent:
         # 保存到临时文件 - 使用WAV格式确保兼容性
         audio_path = tempfile.mktemp(suffix=".wav")
         print(f"[DEBUG] 临时文件路径: {audio_path}")
-        
+
         # 使用soundfile写入音频文件，指定格式和子类型
         sf.write(audio_path, audio_data, samplerate, format='WAV', subtype='PCM_16')
         print(f"[DEBUG] 音频文件已写入")
-        
+
         # 检查文件大小
         file_size = os.path.getsize(audio_path)
         print(f"[DEBUG] 音频文件大小: {file_size} 字节")
-        
+
         if file_size < 100:
             print(f"[ERROR] 音频文件太小，可能录音失败")
             try:
@@ -259,7 +252,7 @@ class ReActAgent:
             audio_path = tempfile.mktemp(suffix=".mp3")
             audio_content = response.content  # 使用content属性更可靠
             print(f"[DEBUG] 语音内容大小: {len(audio_content)} 字节")
-            
+
             with open(audio_path, "wb") as f:
                 f.write(audio_content)
             print(f"[DEBUG] 语音文件已保存: {audio_path}")
@@ -270,7 +263,7 @@ class ReActAgent:
             sd.play(data, samplerate)
             sd.wait()
             print(f"[DEBUG] 语音播放完成")
-            
+
             # 清理临时文件
             try:
                 if os.path.exists(audio_path):
@@ -278,7 +271,7 @@ class ReActAgent:
                     print(f"[DEBUG] 语音临时文件已删除")
             except Exception as e:
                 print(f"[WARNING] 删除语音文件失败: {e}")
-                
+
         except Exception as e:
             print(f"[ERROR] 文本转语音失败: {str(e)}")
             import traceback

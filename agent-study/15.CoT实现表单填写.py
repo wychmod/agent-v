@@ -126,7 +126,10 @@ class ReActAgent:
                     if tool_calls_obj.get(chunk_tool_call.index) is None:
                         tool_calls_obj[chunk_tool_call.index] = chunk_tool_call
                     else:
-                        tool_calls_obj[chunk_tool_call.index].function.arguments += chunk_tool_call.function.arguments
+                        chunk_func = chunk_tool_call.function
+                        existing_func = tool_calls_obj[chunk_tool_call.index].function
+                        if chunk_func is not None and existing_func is not None:
+                            existing_func.arguments += chunk_func.arguments  # type: ignore
 
             # 如果是直接生成则流式打印输出的内容
             if chunk_content:
@@ -150,6 +153,7 @@ class ReActAgent:
         if is_tool_calls:
             # 循环调用对应的工具
             for tool_call in tool_calls_json:
+                assert tool_call.function is not None, "Tool call function should not be None"
                 tool_name = tool_call.function.name
                 tool_arguments = tool_call.function.arguments
                 print("\nTool Call: ", tool_name)
