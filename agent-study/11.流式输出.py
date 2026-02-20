@@ -129,7 +129,7 @@ class ReActAgent:
 
         # 如果有工具调用，执行工具
         if is_tool_calls and tool_calls_list:
-            print(f"\n[开始执行工具调用...]")  # 换行
+            print("\n[开始执行工具调用...]")  # 换行
             # 循环调用对应的工具
             for tool_call in tool_calls_list:
                 tool_name = tool_call["function"]["name"]
