@@ -15,9 +15,7 @@ class LLMConfig(BaseModel):
         max_tokens: 单次请求的最大输出token数，限制响应长度.
     """
 
-    base_url: HttpUrl = HttpUrl(
-        "https://api.gpt.ge/v1"
-    )
+    base_url: HttpUrl = HttpUrl("https://api.gpt.ge/v1")
     api_key: str = Field(
         default="",
         description="模型服务的API认证密钥",
