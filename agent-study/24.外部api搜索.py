@@ -6,7 +6,7 @@ from mcp.client.streamable_http import streamablehttp_client
 
 async def main():
     base_url = "https://qianfan.baidubce.com/v2/ai_search/mcp"
-    header = {"Authorization": "Bearer bce-v3/ALTAK-x22AOpJuk3rLFAtxykPVs/5d7c7522f86c47c9e2b1725f590b5f9d2b33f637"}
+    header = {"Authorization": "Bearer "}
 
     exit_stack = AsyncExitStack()
 
