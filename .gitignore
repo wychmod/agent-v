@@ -33,3 +33,4 @@ build/
 *.egg-info/
 apps/api/.qoder
 apps/api/alembic.ini
+apps/.DS_Store
