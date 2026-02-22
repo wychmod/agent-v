@@ -1,7 +1,7 @@
 import logging
 from functools import lru_cache
 
-from qcloud_cos import CosConfig, CosS3Client
+from qcloud_cos import CosConfig, CosS3Client  # type: ignore
 
 from core.config import Settings, get_settings
 
@@ -29,7 +29,7 @@ class Cos:
                 SecretKey=self._settings.cos_secret_key,
                 Region=self._settings.cos_region,
                 Token=None,
-                Scheme=self._settings.cos_scheme
+                Scheme=self._settings.cos_scheme,
             )
             self._client = CosS3Client(config)
             logger.info("Cos 配置初始化成功")
