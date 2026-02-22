@@ -56,7 +56,7 @@ class RedisClient:
                 password=self._settings.redis_password,
                 decode_responses=True,
             )
-            await self._client.ping()
+            await self._client.ping()  # type: ignore
             logger.info(
                 "Redis client 初始化成功: %s:%s/%s",
                 self._settings.redis_host,
