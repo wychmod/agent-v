@@ -5,7 +5,7 @@
 
 from fastapi import APIRouter
 
-from . import status_routes
+from . import app_config_routes, status_routes
 
 
 def create_api_routes() -> APIRouter:
@@ -19,6 +19,7 @@ def create_api_routes() -> APIRouter:
     api_router = APIRouter()
     # 注册状态检查相关路由
     api_router.include_router(status_routes.router)
+    api_router.include_router(app_config_routes.router)
     return api_router
 
 
