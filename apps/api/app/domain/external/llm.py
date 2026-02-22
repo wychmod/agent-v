@@ -6,7 +6,7 @@ class LLM(Protocol):
 
     async def invoke(
         self,
-        message: list[dict[str, Any]],
+        messages: list[dict[str, Any]],
         tools: list[dict[str, Any]] | None = None,
         response_format: dict[str, Any] | None = None,
         tool_choice: str | None = None,
