@@ -124,8 +124,8 @@ class RedisClient:
         await self.shutdown()
 
 
-@lru_cache(maxsize=1)
-def get_redis_client(settings: Settings | None = None) -> RedisClient:
+@lru_cache
+def get_redis_client() -> RedisClient:
     """获取 RedisClient 单例实例。
 
     使用 lru_cache 确保全局只有一个 RedisClient 实例。
@@ -136,4 +136,4 @@ def get_redis_client(settings: Settings | None = None) -> RedisClient:
     Returns:
         RedisClient: Redis 客户端管理实例
     """
-    return RedisClient(settings=settings)
+    return RedisClient()
