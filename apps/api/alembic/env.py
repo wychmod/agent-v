@@ -4,6 +4,14 @@ from sqlalchemy import engine_from_config, pool
 
 from alembic import context
 from app.infrastructure.models.base import Base
+from app.infrastructure.models.user_models import (  # noqa: F401
+    AuditLogModel,
+    PermissionModel,
+    RoleModel,
+    RolePermissionModel,
+    UserModel,
+    UserRoleModel,
+)
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
