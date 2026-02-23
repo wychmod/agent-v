@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     env: str = "development"
     log_level: str = "INFO"
     app_config_filepath: str = "config.yaml"
+    frontend_url: str = "http://localhost:3000"
 
     # 数据库相关配置
     sqlalchemy_database_uri: str = (
@@ -31,6 +32,25 @@ class Settings(BaseSettings):
     cos_scheme: str = "https"
     cos_bucket: str = ""
     cos_domain: str = ""
+
+    # JWT 认证配置
+    jwt_secret_key: str = "your-super-secret-key-change-in-production"
+    jwt_refresh_secret_key: str = "your-refresh-secret-key-change-in-production"
+    jwt_algorithm: str = "HS256"
+    jwt_access_token_expire_minutes: int = 15
+    jwt_refresh_token_expire_days: int = 7
+
+    # 密码策略配置
+    password_min_length: int = 8
+
+    # SMTP 邮件配置
+    smtp_host: str = "smtp.gmail.com"
+    smtp_port: int = 587
+    smtp_user: str = ""
+    smtp_password: str = ""
+    smtp_use_tls: bool = True
+    email_from: str = "noreply@example.com"
+    email_from_name: str = "User Management System"
 
     model_config = SettingsConfigDict(
         env_file=".env", env_file_encoding="utf-8", extra="ignore"
