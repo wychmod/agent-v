@@ -42,6 +42,22 @@ class RoleRepository(Protocol):
         """检查用户是否拥有指定角色"""
         ...
 
+    async def update(self, role: Role) -> Role:
+        """更新角色信息"""
+        ...
+
+    async def delete(self, role_id: int) -> bool:
+        """删除角色"""
+        ...
+
+    async def exists_by_name(self, name: str) -> bool:
+        """检查角色名是否已存在"""
+        ...
+
+    async def count_users_with_role(self, role_id: int) -> int:
+        """统计拥有该角色的用户数"""
+        ...
+
 
 class PermissionRepository(Protocol):
     """权限仓储协议，定义权限数据持久化的接口契约"""
@@ -86,4 +102,12 @@ class PermissionRepository(Protocol):
         self, user_id: str, resource: str, action: str
     ) -> bool:
         """检查用户是否拥有指定权限"""
+        ...
+
+    async def update(self, permission: Permission) -> Permission:
+        """更新权限信息"""
+        ...
+
+    async def delete(self, permission_id: int) -> bool:
+        """删除权限"""
         ...
