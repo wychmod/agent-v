@@ -2,7 +2,7 @@
 
 import logging
 
-from sqlalchemy import delete, func, select
+from sqlalchemy import delete, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -174,6 +174,48 @@ class MySQLRoleRepository(RoleRepository):
         result = await self._session.execute(stmt)
         return result.scalar_one() > 0
 
+    async def update(self, role: Role) -> Role:
+        """更新角色信息"""
+        stmt = (
+            update(RoleModel)
+            .where(RoleModel.id == role.id)
+            .values(
+                display_name=role.display_name,
+                description=role.description,
+            )
+        )
+        await self._session.execute(stmt)
+        await self._session.flush()
+        logger.info(f"更新角色成功: id={role.id}")
+        return await self.get_by_id(role.id)
+
+    async def delete(self, role_id: int) -> bool:
+        """删除角色"""
+        stmt = delete(RolePermissionModel).where(
+            RolePermissionModel.role_id == role_id
+        )
+        await self._session.execute(stmt)
+
+        stmt = delete(RoleModel).where(RoleModel.id == role_id)
+        result = await self._session.execute(stmt)
+        await self._session.flush()
+        logger.info(f"删除角色: id={role_id}")
+        return result.rowcount > 0
+
+    async def exists_by_name(self, name: str) -> bool:
+        """检查角色名是否已存在"""
+        stmt = select(func.count(RoleModel.id)).where(RoleModel.name == name)
+        result = await self._session.execute(stmt)
+        return result.scalar_one() > 0
+
+    async def count_users_with_role(self, role_id: int) -> int:
+        """统计拥有该角色的用户数"""
+        stmt = select(func.count(UserRoleModel.id)).where(
+            UserRoleModel.role_id == role_id
+        )
+        result = await self._session.execute(stmt)
+        return result.scalar_one()
+
 
 class MySQLPermissionRepository(PermissionRepository):
     """MySQL 权限仓储实现"""
@@ -315,3 +357,28 @@ class MySQLPermissionRepository(PermissionRepository):
         )
         result = await self._session.execute(stmt)
         return result.scalar_one() > 0
+
+    async def update(self, permission: Permission) -> Permission:
+        """更新权限信息"""
+        stmt = (
+            update(PermissionModel)
+            .where(PermissionModel.id == permission.id)
+            .values(display_name=permission.display_name)
+        )
+        await self._session.execute(stmt)
+        await self._session.flush()
+        logger.info(f"更新权限成功: id={permission.id}")
+        return await self.get_by_id(permission.id)
+
+    async def delete(self, permission_id: int) -> bool:
+        """删除权限"""
+        stmt = delete(RolePermissionModel).where(
+            RolePermissionModel.permission_id == permission_id
+        )
+        await self._session.execute(stmt)
+
+        stmt = delete(PermissionModel).where(PermissionModel.id == permission_id)
+        result = await self._session.execute(stmt)
+        await self._session.flush()
+        logger.info(f"删除权限: id={permission_id}")
+        return result.rowcount > 0
