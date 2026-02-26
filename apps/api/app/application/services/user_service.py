@@ -1,6 +1,7 @@
 """用户管理服务"""
 
 import logging
+import uuid
 
 from app.application.errors.exceptions import (
     ConflictError,
@@ -8,7 +9,7 @@ from app.application.errors.exceptions import (
     NotFoundError,
 )
 from app.application.security.password_handler import PasswordHandler
-from app.domain.models.user import AuditLog, User
+from app.domain.models.user import AuditLog, User, UserWithPassword
 from app.domain.repositories.audit_log_repository import AuditLogRepository
 from app.domain.repositories.role_repository import PermissionRepository, RoleRepository
 from app.domain.repositories.user_repository import UserRepository
@@ -308,3 +309,143 @@ class UserService:
             f"分配权限成功: role_id={role_id}, permission_id={permission_id}, "
             f"by={current_user.id}"
         )
+
+    async def create_user_by_admin(
+        self,
+        email: str,
+        username: str,
+        password: str,
+        is_active: bool = True,
+        must_change_password: bool = False,
+        current_user: User | None = None,
+        ip_address: str | None = None,
+        user_agent: str | None = None,
+    ) -> User:
+        """管理员创建用户"""
+        # 检查邮箱唯一性
+        if await self._user_repo.exists_by_email(email):
+            raise ConflictError(resource="用户", reason="邮箱已被注册")
+
+        # 检查用户名唯一性
+        if await self._user_repo.exists_by_username(username):
+            raise ConflictError(resource="用户", reason="用户名已被使用")
+
+        # 验证密码强度
+        self._password_handler.validate_password_or_raise(password)
+
+        # 生成密码哈希
+        password_hash = self._password_handler.hash_password(password)
+
+        from datetime import datetime
+
+        # 创建用户
+        user = UserWithPassword(
+            id=str(uuid.uuid4()),
+            email=email,
+            username=username,
+            password_hash=password_hash,
+            is_active=is_active,
+            is_verified=True,  # 管理员创建的用户直接验证
+            must_change_password=must_change_password,
+            created_at=datetime.utcnow(),
+            updated_at=datetime.utcnow(),
+        )
+
+        created_user = await self._user_repo.create(user)
+
+        # 分配默认角色
+        default_role = await self._role_repo.get_by_name("user")
+        if default_role:
+            await self._role_repo.assign_role_to_user(
+                created_user.id,
+                default_role.id,
+                current_user.id if current_user else None,
+            )
+
+        # 记录审计日志
+        await self._audit_repo.create(
+            AuditLog(
+                user_id=current_user.id if current_user else None,
+                action="admin_create_user",
+                resource="user",
+                resource_id=created_user.id,
+                ip_address=ip_address,
+                user_agent=user_agent,
+                status="success",
+                details={
+                    "email": email,
+                    "username": username,
+                    "is_active": is_active,
+                    "must_change_password": must_change_password,
+                },
+            )
+        )
+
+        logger.info(
+            f"管理员创建用户成功: user_id={created_user.id}, "
+            f"by={current_user.id if current_user else 'system'}"
+        )
+
+        # 重新获取用户以加载角色信息
+        return await self._user_repo.get_by_id(created_user.id)
+
+    async def update_user_by_admin(
+        self,
+        user_id: str,
+        username: str | None = None,
+        email: str | None = None,
+        is_active: bool | None = None,
+        current_user: User | None = None,
+        ip_address: str | None = None,
+        user_agent: str | None = None,
+    ) -> User:
+        """管理员更新用户信息"""
+        user = await self._user_repo.get_by_id(user_id)
+        if user is None:
+            raise NotFoundError(resource="用户", identifier=user_id)
+
+        changes = {}
+
+        # 更新用户名
+        if username is not None and username != user.username:
+            if await self._user_repo.exists_by_username(username):
+                raise ConflictError(resource="用户", reason="用户名已被使用")
+            user.username = username
+            changes["username"] = username
+
+        # 更新邮箱
+        if email is not None and email != user.email:
+            if await self._user_repo.exists_by_email(email):
+                raise ConflictError(resource="用户", reason="邮箱已被注册")
+            user.email = email
+            changes["email"] = email
+
+        # 更新激活状态
+        if is_active is not None and is_active != user.is_active:
+            user.is_active = is_active
+            changes["is_active"] = is_active
+
+        # 保存更新
+        updated_user = await self._user_repo.update(user)
+
+        # 记录审计日志
+        await self._audit_repo.create(
+            AuditLog(
+                user_id=current_user.id if current_user else None,
+                action="admin_update_user",
+                resource="user",
+                resource_id=user_id,
+                ip_address=ip_address,
+                user_agent=user_agent,
+                status="success",
+                details=changes,
+            )
+        )
+
+        logger.info(
+            f"管理员更新用户成功: user_id={user_id}, "
+            f"changes={changes}, "
+            f"by={current_user.id if current_user else 'system'}"
+        )
+
+        return updated_user
