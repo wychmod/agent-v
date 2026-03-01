@@ -34,3 +34,6 @@ build/
 apps/api/.qoder
 apps/api/alembic.ini
 apps/.DS_Store
+apps/api/config.lock
+apps/api/config.yaml
+apps/api/nul

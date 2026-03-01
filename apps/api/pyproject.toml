@@ -26,6 +26,7 @@ dependencies = [
     "uvicorn[standard]>=0.40.0",
     "starlette-admin>=0.14.0",
     "itsdangerous>=2.2.0",
+    "tzdata>=2025.1",
 ]
 
 [[tool.uv.index]]

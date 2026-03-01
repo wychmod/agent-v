@@ -20,41 +20,41 @@ class UserView(ModelView):
     icon = "fa fa-users"
 
     exclude_fields_from_list = [
-        UserModel.password_hash,
-        UserModel.must_change_password,
-        UserModel.updated_at,
-        UserModel.roles,
-        UserModel.audit_logs,
+        "password_hash",
+        "must_change_password",
+        "updated_at",
+        "roles",
+        "audit_logs",
     ]
     exclude_fields_from_detail = [
-        UserModel.password_hash,
+        "password_hash",
     ]
     exclude_fields_from_create = [
-        UserModel.id,
-        UserModel.password_hash,
-        UserModel.created_at,
-        UserModel.updated_at,
-        UserModel.last_login_at,
-        UserModel.roles,
-        UserModel.audit_logs,
+        "id",
+        "password_hash",
+        "created_at",
+        "updated_at",
+        "last_login_at",
+        "roles",
+        "audit_logs",
     ]
     exclude_fields_from_edit = [
-        UserModel.id,
-        UserModel.password_hash,
-        UserModel.created_at,
-        UserModel.updated_at,
-        UserModel.last_login_at,
-        UserModel.roles,
-        UserModel.audit_logs,
+        "id",
+        "password_hash",
+        "created_at",
+        "updated_at",
+        "last_login_at",
+        "roles",
+        "audit_logs",
     ]
-    searchable_fields = [UserModel.email, UserModel.username]
+    searchable_fields = ["email", "username"]
     sortable_fields = [
-        UserModel.created_at,
-        UserModel.email,
-        UserModel.username,
-        UserModel.is_active,
+        "created_at",
+        "email",
+        "username",
+        "is_active",
     ]
-    fields_default_sort = [(UserModel.created_at, True)]
+    fields_default_sort = [("created_at", True)]
     page_size = 20
     page_size_options = [10, 20, 50, 100]
     export_types = []
@@ -81,24 +81,24 @@ class RoleView(ModelView):
     icon = "fa fa-shield-halved"
 
     exclude_fields_from_list = [
-        RoleModel.users,
-        RoleModel.permissions,
+        "users",
+        "permissions",
     ]
     exclude_fields_from_create = [
-        RoleModel.id,
-        RoleModel.created_at,
-        RoleModel.users,
-        RoleModel.permissions,
+        "id",
+        "created_at",
+        "users",
+        "permissions",
     ]
     exclude_fields_from_edit = [
-        RoleModel.id,
-        RoleModel.created_at,
-        RoleModel.users,
-        RoleModel.permissions,
+        "id",
+        "created_at",
+        "users",
+        "permissions",
     ]
-    searchable_fields = [RoleModel.name, RoleModel.display_name]
-    sortable_fields = [RoleModel.name, RoleModel.display_name, RoleModel.created_at]
-    fields_default_sort = [(RoleModel.created_at, True)]
+    searchable_fields = ["name", "display_name"]
+    sortable_fields = ["name", "display_name", "created_at"]
+    fields_default_sort = [("created_at", True)]
     page_size = 20
 
     column_labels = {
@@ -118,29 +118,29 @@ class PermissionView(ModelView):
     icon = "fa fa-key"
 
     exclude_fields_from_list = [
-        PermissionModel.roles,
+        "roles",
     ]
     exclude_fields_from_create = [
-        PermissionModel.id,
-        PermissionModel.created_at,
-        PermissionModel.roles,
+        "id",
+        "created_at",
+        "roles",
     ]
     exclude_fields_from_edit = [
-        PermissionModel.id,
-        PermissionModel.created_at,
-        PermissionModel.roles,
+        "id",
+        "created_at",
+        "roles",
     ]
     searchable_fields = [
-        PermissionModel.resource,
-        PermissionModel.action,
-        PermissionModel.display_name,
+        "resource",
+        "action",
+        "display_name",
     ]
     sortable_fields = [
-        PermissionModel.resource,
-        PermissionModel.action,
-        PermissionModel.created_at,
+        "resource",
+        "action",
+        "created_at",
     ]
-    fields_default_sort = [(PermissionModel.created_at, True)]
+    fields_default_sort = [("created_at", True)]
     page_size = 20
 
     column_labels = {
@@ -160,15 +160,15 @@ class UserRoleView(ModelView):
     icon = "fa fa-user-tag"
 
     exclude_fields_from_create = [
-        UserRoleModel.id,
-        UserRoleModel.assigned_at,
+        "id",
+        "assigned_at",
     ]
     exclude_fields_from_edit = [
-        UserRoleModel.id,
-        UserRoleModel.assigned_at,
+        "id",
+        "assigned_at",
     ]
-    sortable_fields = [UserRoleModel.assigned_at]
-    fields_default_sort = [(UserRoleModel.assigned_at, True)]
+    sortable_fields = ["assigned_at"]
+    fields_default_sort = [("assigned_at", True)]
     page_size = 20
 
     column_labels = {
@@ -190,15 +190,15 @@ class RolePermissionView(ModelView):
     icon = "fa fa-lock"
 
     exclude_fields_from_create = [
-        RolePermissionModel.id,
-        RolePermissionModel.created_at,
+        "id",
+        "created_at",
     ]
     exclude_fields_from_edit = [
-        RolePermissionModel.id,
-        RolePermissionModel.created_at,
+        "id",
+        "created_at",
     ]
-    sortable_fields = [RolePermissionModel.created_at]
-    fields_default_sort = [(RolePermissionModel.created_at, True)]
+    sortable_fields = ["created_at"]
+    fields_default_sort = [("created_at", True)]
     page_size = 20
 
     column_labels = {
@@ -218,27 +218,32 @@ class AuditLogView(ModelView):
     label = "审计日志"
     icon = "fa fa-clipboard-list"
 
-    can_create = False
-    can_edit = False
-    can_delete = False
+    def can_create(self, request) -> bool:
+        return False
+
+    def can_edit(self, request) -> bool:
+        return False
+
+    def can_delete(self, request) -> bool:
+        return False
 
     exclude_fields_from_list = [
-        AuditLogModel.user_agent,
-        AuditLogModel.details,
+        "user_agent",
+        "details",
     ]
     searchable_fields = [
-        AuditLogModel.action,
-        AuditLogModel.resource,
-        AuditLogModel.status,
-        AuditLogModel.ip_address,
+        "action",
+        "resource",
+        "status",
+        "ip_address",
     ]
     sortable_fields = [
-        AuditLogModel.created_at,
-        AuditLogModel.action,
-        AuditLogModel.resource,
-        AuditLogModel.status,
+        "created_at",
+        "action",
+        "resource",
+        "status",
     ]
-    fields_default_sort = [(AuditLogModel.created_at, True)]
+    fields_default_sort = [("created_at", True)]
     page_size = 50
     page_size_options = [25, 50, 100, 200]
 
