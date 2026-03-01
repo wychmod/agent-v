@@ -5,7 +5,14 @@
 
 from fastapi import APIRouter
 
-from . import app_config_routes, auth_routes, status_routes, user_routes
+from . import (
+    app_config_routes,
+    auth_routes,
+    permission_routes,
+    role_routes,
+    status_routes,
+    user_routes,
+)
 
 
 def create_api_routes() -> APIRouter:
@@ -24,6 +31,9 @@ def create_api_routes() -> APIRouter:
     api_router.include_router(auth_routes.router)
     api_router.include_router(user_routes.router)
     api_router.include_router(user_routes.roles_router)
+    # 注册角色和权限管理路由
+    api_router.include_router(role_routes.router)
+    api_router.include_router(permission_routes.router)
     return api_router
 
 
