@@ -82,13 +82,13 @@ class UserDetailResponse(BaseModel):
             updated_at=user.updated_at,
             roles=[
                 RoleResponse(
-                    id=user_role.role.id,
-                    name=user_role.role.name,
-                    display_name=user_role.role.display_name,
-                    description=user_role.role.description,
-                    created_at=user_role.role.created_at,
+                    id=role.id,
+                    name=role.name,
+                    display_name=role.display_name,
+                    description=role.description,
+                    created_at=role.created_at,
                 )
-                for user_role in user.roles
+                for role in user.roles
             ],
         )
 
