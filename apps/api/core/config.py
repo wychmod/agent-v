@@ -16,7 +16,7 @@ class Settings(BaseSettings):
 
     # 数据库相关配置
     sqlalchemy_database_uri: str = (
-        "mysql+aiomysql://root:penghan123@117.72.218.181:3306/manus"
+        "mysql+aiomysql://root:xxxxxx@117.72.218.181:3306/manus"
     )
 
     # Redis缓存配置
