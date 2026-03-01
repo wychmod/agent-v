@@ -55,6 +55,14 @@ class RefreshTokenSchema(BaseModel):
     refresh_token: str = Field(description="刷新令牌")
 
 
+class LogoutSchema(BaseModel):
+    """登出请求"""
+
+    refresh_token: str | None = Field(
+        default=None, description="刷新令牌（如提供则一并失效）"
+    )
+
+
 class VerifyEmailSchema(BaseModel):
     """邮箱验证请求"""
 
