@@ -15,9 +15,7 @@ class Settings(BaseSettings):
     frontend_url: str = "http://localhost:3000"
 
     # 数据库相关配置
-    sqlalchemy_database_uri: str = (
-        "mysql+aiomysql://root:xxxxxx@117.72.218.181:3306/manus"
-    )
+    sqlalchemy_database_uri: str = ""
 
     # Redis缓存配置
     redis_host: str = "localhost"
