@@ -1,11 +1,14 @@
 """MySQL 角色和权限仓储实现"""
 
 import logging
+from typing import cast
 
 from sqlalchemy import delete, func, select, update
+from sqlalchemy.engine import CursorResult
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.application.errors.exceptions import ServerInternalError
 from app.domain.models.user import Permission, Role
 from app.domain.repositories.role_repository import PermissionRepository, RoleRepository
 from app.infrastructure.models.user_models import (
@@ -187,17 +190,18 @@ class MySQLRoleRepository(RoleRepository):
         await self._session.execute(stmt)
         await self._session.flush()
         logger.info(f"更新角色成功: id={role.id}")
-        return await self.get_by_id(role.id)
+        updated_role = await self.get_by_id(role.id)
+        if updated_role is None:
+            raise ServerInternalError(message=f"更新后无法找到角色: id={role.id}")
+        return updated_role
 
     async def delete(self, role_id: int) -> bool:
         """删除角色"""
-        stmt = delete(RolePermissionModel).where(
-            RolePermissionModel.role_id == role_id
-        )
+        stmt = delete(RolePermissionModel).where(RolePermissionModel.role_id == role_id)
         await self._session.execute(stmt)
 
         stmt = delete(RoleModel).where(RoleModel.id == role_id)
-        result = await self._session.execute(stmt)
+        result = cast(CursorResult, await self._session.execute(stmt))
         await self._session.flush()
         logger.info(f"删除角色: id={role_id}")
         return result.rowcount > 0
@@ -358,7 +362,7 @@ class MySQLPermissionRepository(PermissionRepository):
         result = await self._session.execute(stmt)
         return result.scalar_one() > 0
 
-    async def update(self, permission: Permission) -> Permission:
+    async def update(self, permission: Permission) -> Permission | None:
         """更新权限信息"""
         stmt = (
             update(PermissionModel)
@@ -378,7 +382,7 @@ class MySQLPermissionRepository(PermissionRepository):
         await self._session.execute(stmt)
 
         stmt = delete(PermissionModel).where(PermissionModel.id == permission_id)
-        result = await self._session.execute(stmt)
+        result = cast(CursorResult, await self._session.execute(stmt))
         await self._session.flush()
         logger.info(f"删除权限: id={permission_id}")
         return result.rowcount > 0

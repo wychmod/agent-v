@@ -104,7 +104,7 @@ class PermissionRepository(Protocol):
         """检查用户是否拥有指定权限"""
         ...
 
-    async def update(self, permission: Permission) -> Permission:
+    async def update(self, permission: Permission) -> Permission | None:
         """更新权限信息"""
         ...
 

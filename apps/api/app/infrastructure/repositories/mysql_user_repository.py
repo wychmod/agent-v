@@ -2,8 +2,10 @@
 
 import logging
 from datetime import datetime
+from typing import cast
 
 from sqlalchemy import func, select, update
+from sqlalchemy.engine import CursorResult
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -167,7 +169,9 @@ class MySQLUserRepository(UserRepository):
         await self._session.flush()
 
         logger.info(f"更新用户成功: id={user.id}")
-        return await self.get_by_id(user.id)
+        updated_user = await self.get_by_id(user.id)
+        assert updated_user is not None, f"更新后用户不存在: id={user.id}"
+        return updated_user
 
     async def update_password(self, user_id: str, password_hash: str) -> None:
         """更新用户密码"""
@@ -218,7 +222,7 @@ class MySQLUserRepository(UserRepository):
                 updated_at=datetime.utcnow(),
             )
         )
-        result = await self._session.execute(stmt)
+        result = cast(CursorResult, await self._session.execute(stmt))
         await self._session.flush()
         logger.info(f"软删除用户: id={user_id}")
         return result.rowcount > 0
