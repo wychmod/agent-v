@@ -8,11 +8,13 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.sessions import SessionMiddleware
 
 from app.infrastructure.logging import setup_logging
 from app.infrastructure.storage.cos import get_cos
 from app.infrastructure.storage.mysql import get_mysql_client
 from app.infrastructure.storage.redis import get_redis_client
+from app.interfaces.admin.setup import setup_admin
 from app.interfaces.endpoints.routes import router
 from app.interfaces.errors.exception_handles import register_exception_handlers
 from core.config import get_settings
@@ -54,6 +56,7 @@ async def lifespan(app: FastAPI):
         await get_redis_client().init()
         await get_mysql_client().init()
         await get_cos().init()
+        setup_admin(app)
         yield
     finally:
         await get_cos().shutdown()
@@ -79,6 +82,9 @@ app.add_middleware(
     allow_methods=["*"],  # 允许所有HTTP方法
     allow_headers=["*"],  # 允许所有HTTP头
 )
+
+# 配置Session中间件，用于管理后台认证
+app.add_middleware(SessionMiddleware, secret_key=settings.admin_secret_key)
 
 # 注册异常处理
 register_exception_handlers(app)
