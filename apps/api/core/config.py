@@ -52,6 +52,8 @@ class Settings(BaseSettings):
     email_from: str = "noreply@example.com"
     email_from_name: str = "User Management System"
 
+    # Admin 后台管理密钥，用于验证管理员身份，生产环境必须修改
+    admin_secret_key: str = "admin-secret-key-change-in-production"
     model_config = SettingsConfigDict(
         env_file=".env", env_file_encoding="utf-8", extra="ignore"
     )

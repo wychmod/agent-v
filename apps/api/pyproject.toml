@@ -24,6 +24,8 @@ dependencies = [
     "redis>=7.1.1",
     "sqlalchemy>=2.0.46",
     "uvicorn[standard]>=0.40.0",
+    "starlette-admin>=0.14.0",
+    "itsdangerous>=2.2.0",
 ]
 
 [[tool.uv.index]]
