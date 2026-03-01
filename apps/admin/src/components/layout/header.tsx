@@ -38,7 +38,7 @@ export function Header() {
   const router = useRouter();
   const { toast } = useToast();
   const { user, refreshToken, clearAuth } = useAuthStore();
-  const { theme, setTheme, resolvedTheme } = useTheme();
+  const { setTheme, resolvedTheme, mounted } = useTheme();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   // 监听快捷键 Ctrl/Cmd + K
@@ -116,7 +116,7 @@ export function Header() {
           onClick={toggleTheme}
           className="text-slate-600 dark:text-slate-400"
         >
-          {resolvedTheme === 'dark' ? (
+          {mounted && resolvedTheme === 'dark' ? (
             <Sun className="h-5 w-5" />
           ) : (
             <Moon className="h-5 w-5" />

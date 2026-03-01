@@ -37,3 +37,4 @@ apps/.DS_Store
 apps/api/config.lock
 apps/api/config.yaml
 apps/api/nul
+apps/admin/nul

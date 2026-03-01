@@ -16,6 +16,7 @@ interface ThemeContextType {
   theme: Theme;
   setTheme: (theme: Theme) => void;
   resolvedTheme: 'light' | 'dark';
+  mounted: boolean;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -24,6 +25,7 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setThemeState] = useState<Theme>('light');
   const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('light');
+  const [mounted, setMounted] = useState(false);
 
   /** 应用主题到 DOM */
   const applyTheme = (newTheme: Theme) => {
@@ -58,16 +60,18 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     applyTheme(newTheme);
   };
 
-  // 初始化主题
+  // 初始化主题 - 只在客户端执行
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme') as Theme | null;
     const initialTheme = savedTheme || 'light';
     setThemeState(initialTheme);
     applyTheme(initialTheme);
+    setMounted(true);
   }, []);
 
   // 监听系统主题变化
   useEffect(() => {
+    if (!mounted) return;
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
     const handleChange = () => {
       if (theme === 'system') {
@@ -77,17 +81,18 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
     mediaQuery.addEventListener('change', handleChange);
     return () => mediaQuery.removeEventListener('change', handleChange);
-  }, [theme]);
+  }, [theme, mounted]);
 
   // 当主题设置为 system 时，监听系统变化
   useEffect(() => {
-    if (theme === 'system') {
+    if (mounted && theme === 'system') {
       applyTheme('system');
     }
-  }, [theme]);
+  }, [theme, mounted]);
 
+  // 在客户端挂载前，返回带有默认主题的 children，避免 hydration 不匹配
   return (
-    <ThemeContext.Provider value={{ theme, setTheme, resolvedTheme }}>
+    <ThemeContext.Provider value={{ theme, setTheme, resolvedTheme, mounted }}>
       {children}
     </ThemeContext.Provider>
   );

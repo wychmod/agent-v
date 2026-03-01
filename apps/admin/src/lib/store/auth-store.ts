@@ -95,7 +95,9 @@ export const useAuthStore = create<AuthState>()(
         user: state.user,
         isAuthenticated: state.isAuthenticated,
       }),
-      // 页面加载时同步 cookie 状态
+      // 跳过自动 hydration，避免 hydration 不匹配
+      skipHydration: true,
+      // rehydrate 完成后同步 cookie
       onRehydrateStorage: () => (state) => {
         if (state?.accessToken) {
           setCookie('auth-token', state.accessToken);
