@@ -10,13 +10,13 @@ import type { AuditLog, AuditLogQueryParams, AuditLogListResponse } from '@/type
 /** 获取审计日志列表 */
 async function getAuditLogs(params?: AuditLogQueryParams): Promise<AuditLogListResponse> {
   const response = await apiClient.get('/audit-logs', { params });
-  return response.data;
+  return response.data.data;
 }
 
 /** 获取单条审计日志详情 */
 async function getAuditLog(logId: string): Promise<AuditLog> {
   const response = await apiClient.get(`/audit-logs/${logId}`);
-  return response.data;
+  return response.data.data;
 }
 
 /** 审计日志 API 命名空间 */

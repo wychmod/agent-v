@@ -7,6 +7,7 @@
 import apiClient from './client';
 import type {
   Role,
+  RoleDetail,
   Permission,
   CreateRoleRequest,
   UpdateRoleRequest,
@@ -15,39 +16,39 @@ import type {
 /** 获取所有角色 */
 async function getRoles(): Promise<Role[]> {
   const response = await apiClient.get('/roles');
-  return response.data;
+  return response.data.data;
 }
 
 /** 创建角色 */
-async function createRole(data: CreateRoleRequest): Promise<Role> {
+async function createRole(data: CreateRoleRequest): Promise<RoleDetail> {
   const response = await apiClient.post('/roles', data);
-  return response.data;
+  return response.data.data;
 }
 
 /** 更新角色 */
-async function updateRole(roleId: string, data: UpdateRoleRequest): Promise<Role> {
+async function updateRole(roleId: number, data: UpdateRoleRequest): Promise<RoleDetail> {
   const response = await apiClient.put(`/roles/${roleId}`, data);
-  return response.data;
+  return response.data.data;
 }
 
 /** 删除角色 */
-async function deleteRole(roleId: string): Promise<void> {
+async function deleteRole(roleId: number): Promise<void> {
   await apiClient.delete(`/roles/${roleId}`);
 }
 
 /** 获取角色权限 */
-async function getRolePermissions(roleId: string): Promise<Permission[]> {
+async function getRolePermissions(roleId: number): Promise<Permission[]> {
   const response = await apiClient.get(`/roles/${roleId}/permissions`);
-  return response.data;
+  return response.data.data;
 }
 
-/** 为角色分配权限 */
-async function assignPermission(roleId: string, permissionId: string): Promise<void> {
-  await apiClient.post(`/roles/${roleId}/permissions/${permissionId}`);
+/** 为角色分配权限（通过请求体传递 permission_id） */
+async function assignPermission(roleId: number, permissionId: number): Promise<void> {
+  await apiClient.post(`/roles/${roleId}/permissions`, { permission_id: permissionId });
 }
 
 /** 移除角色权限 */
-async function removePermission(roleId: string, permissionId: string): Promise<void> {
+async function removePermission(roleId: number, permissionId: number): Promise<void> {
   await apiClient.delete(`/roles/${roleId}/permissions/${permissionId}`);
 }
 

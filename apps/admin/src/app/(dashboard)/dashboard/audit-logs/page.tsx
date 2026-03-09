@@ -91,8 +91,8 @@ export default function AuditLogsPage() {
     setIsLoading(true);
     try {
       const response = await auditLogsApi.getAuditLogs({
-        page: currentPage,
-        page_size: pageSize,
+        skip: (currentPage - 1) * pageSize,
+        limit: pageSize,
         action: filters.action || undefined,
         resource: filters.resource || undefined,
       });
@@ -104,37 +104,34 @@ export default function AuditLogsPage() {
       // 如果 API 尚未实现，显示模拟数据
       const mockLogs: AuditLog[] = [
         {
-          id: '1',
+          id: 1,
           user_id: 'user-1',
-          user_email: 'admin@example.com',
-          username: 'admin',
           action: 'login',
           resource: 'system',
-          details: '管理员登录系统',
+          status: 'success',
+          details: { message: '管理员登录系统' },
           ip_address: '192.168.1.1',
           created_at: new Date().toISOString(),
         },
         {
-          id: '2',
+          id: 2,
           user_id: 'user-1',
-          user_email: 'admin@example.com',
-          username: 'admin',
           action: 'create',
           resource: 'user',
           resource_id: 'user-2',
-          details: '创建新用户 test@example.com',
+          status: 'success',
+          details: { message: '创建新用户 test@example.com' },
           ip_address: '192.168.1.1',
           created_at: new Date(Date.now() - 3600000).toISOString(),
         },
         {
-          id: '3',
+          id: 3,
           user_id: 'user-1',
-          user_email: 'admin@example.com',
-          username: 'admin',
           action: 'assign',
           resource: 'role',
           resource_id: 'role-1',
-          details: '为用户分配角色 admin',
+          status: 'success',
+          details: { message: '为用户分配角色 admin' },
           ip_address: '192.168.1.1',
           created_at: new Date(Date.now() - 7200000).toISOString(),
         },
@@ -301,8 +298,9 @@ export default function AuditLogsPage() {
                         <div className="flex items-center gap-2">
                           <User className="h-4 w-4 text-slate-400" />
                           <div>
-                            <p className="font-medium text-sm">{log.username || '未知'}</p>
-                            <p className="text-xs text-slate-400">{log.user_email}</p>
+                            <p className="font-medium text-sm font-mono">
+                              {log.user_id ? log.user_id.slice(0, 8) + '...' : '系统'}
+                            </p>
                           </div>
                         </div>
                       </TableCell>
@@ -323,8 +321,8 @@ export default function AuditLogsPage() {
                         )}
                       </TableCell>
                       <TableCell className="max-w-[300px]">
-                        <p className="text-sm text-slate-600 truncate" title={log.details}>
-                          {log.details || '-'}
+                        <p className="text-sm text-slate-600 truncate" title={typeof log.details === 'object' ? JSON.stringify(log.details) : String(log.details || '')}>
+                          {typeof log.details === 'object' ? JSON.stringify(log.details) : (log.details || '-')}
                         </p>
                       </TableCell>
                       <TableCell className="text-slate-500 text-sm font-mono">

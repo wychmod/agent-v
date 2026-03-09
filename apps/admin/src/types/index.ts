@@ -8,8 +8,8 @@
 
 /** API 通用响应结构 */
 export interface ApiResponse<T = unknown> {
-  code?: number;
-  message?: string;
+  code: number;
+  message: string;
   data: T;
 }
 
@@ -40,23 +40,30 @@ export interface TokenResponse {
 
 // ==================== 用户相关类型 ====================
 
-/** 角色简要信息（用于用户角色列表） */
-export interface RoleBasic {
-  id: string;
-  name: string;
-}
-
-/** 用户基本信息 */
+/** 用户基本信息（登录上下文，角色为名称字符串数组） */
 export interface UserInfo {
   id: string;
   email: string;
   username: string;
   is_active: boolean;
-  is_verified?: boolean;
-  must_change_password?: boolean;
-  roles?: RoleBasic[];
+  is_verified: boolean;
+  must_change_password: boolean;
+  roles: string[];
   created_at: string;
-  updated_at?: string;
+}
+
+/** 用户详情信息（管理上下文，角色为完整对象数组） */
+export interface UserDetail {
+  id: string;
+  email: string;
+  username: string;
+  is_active: boolean;
+  is_verified: boolean;
+  must_change_password: boolean;
+  last_login_at?: string;
+  created_at: string;
+  updated_at: string;
+  roles: Role[];
 }
 
 /** 创建用户请求 */
@@ -65,76 +72,95 @@ export interface CreateUserRequest {
   username: string;
   password: string;
   is_active?: boolean;
+  must_change_password?: boolean;
 }
 
-/** 管理员创建用户请求（与 CreateUserRequest 相同，保留类型别名以保持兼容性） */
+/** 管理员创建用户请求 */
 export type AdminCreateUserRequest = CreateUserRequest;
 
 /** 更新用户请求 */
 export interface UpdateUserRequest {
   username?: string;
   email?: string;
-  password?: string;
   is_active?: boolean;
 }
 
-/** 管理员更新用户请求（与 UpdateUserRequest 相同，保留类型别名以保持兼容性） */
+/** 管理员更新用户请求 */
 export type AdminUpdateUserRequest = UpdateUserRequest;
+
+/** 用户列表响应 */
+export interface UsersListResponse {
+  items: UserDetail[];
+  total: number;
+  skip: number;
+  limit: number;
+}
 
 // ==================== 角色相关类型 ====================
 
-/** 角色信息 */
+/** 角色信息（匹配后端 RoleResponse） */
 export interface Role {
-  id: string;
+  id: number;
   name: string;
+  display_name: string;
   description?: string | null;
   created_at: string;
-  updated_at?: string;
+}
+
+/** 角色详情（匹配后端 RoleDetailResponse，包含统计信息） */
+export interface RoleDetail {
+  id: number;
+  name: string;
+  display_name: string;
+  description?: string | null;
+  created_at: string;
+  permission_count: number;
+  user_count: number;
 }
 
 /** 创建角色请求 */
 export interface CreateRoleRequest {
   name: string;
+  display_name: string;
   description?: string;
 }
 
 /** 更新角色请求 */
 export interface UpdateRoleRequest {
-  name?: string;
+  display_name?: string;
   description?: string;
 }
 
 // ==================== 权限相关类型 ====================
 
-/** 权限信息 */
+/** 权限信息（匹配后端 PermissionResponse） */
 export interface Permission {
-  id: string;
-  name: string;
-  description?: string | null;
+  id: number;
+  resource: string;
+  action: string;
+  display_name: string;
   created_at: string;
-  updated_at?: string;
 }
 
 /** 创建权限请求 */
 export interface CreatePermissionRequest {
-  name: string;
-  description?: string;
+  resource: string;
+  action: string;
+  display_name: string;
 }
 
 /** 更新权限请求 */
 export interface UpdatePermissionRequest {
-  name?: string;
-  description?: string;
+  display_name: string;
 }
 
 // ==================== 系统状态类型 ====================
 
-/** 系统状态响应 */
-export interface SystemStatus {
-  status: 'healthy' | 'unhealthy';
-  database: 'connected' | 'disconnected';
-  version?: string;
-  message?: string;
+/** 单个服务健康状态（匹配后端 HealthStatus） */
+export interface HealthStatus {
+  service: string;
+  status: string;
+  details: string;
 }
 
 // ==================== 审计日志类型 ====================
@@ -157,25 +183,24 @@ export type AuditResource =
   | 'permission'
   | 'system';
 
-/** 审计日志条目 */
+/** 审计日志条目（匹配后端 AuditLogResponse） */
 export interface AuditLog {
-  id: string;
-  user_id: string;
-  user_email?: string;
-  username?: string;
+  id: number;
+  user_id?: string;
   action: AuditAction;
   resource: AuditResource;
   resource_id?: string;
-  details?: string;
   ip_address?: string;
   user_agent?: string;
+  status: string;
+  details?: Record<string, unknown>;
   created_at: string;
 }
 
 /** 审计日志查询参数 */
 export interface AuditLogQueryParams {
-  page?: number;
-  page_size?: number;
+  skip?: number;
+  limit?: number;
   action?: AuditAction;
   resource?: AuditResource;
   user_id?: string;
@@ -187,6 +212,6 @@ export interface AuditLogQueryParams {
 export interface AuditLogListResponse {
   items: AuditLog[];
   total: number;
-  page: number;
-  page_size: number;
+  skip: number;
+  limit: number;
 }
