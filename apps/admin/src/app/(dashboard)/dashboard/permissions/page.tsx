@@ -78,8 +78,9 @@ export default function PermissionsPage() {
 
   // 表单状态
   const [formData, setFormData] = useState({
-    name: '',
-    description: '',
+    resource: '',
+    action: '',
+    display_name: '',
   });
 
   /** 加载权限列表 */
@@ -112,8 +113,9 @@ export default function PermissionsPage() {
       const query = searchQuery.toLowerCase();
       const filtered = permissions.filter(
         (p) =>
-          p.name.toLowerCase().includes(query) ||
-          (p.description && p.description.toLowerCase().includes(query))
+          p.display_name.toLowerCase().includes(query) ||
+          p.resource.toLowerCase().includes(query) ||
+          p.action.toLowerCase().includes(query)
       );
       setFilteredPermissions(filtered);
     }
@@ -122,8 +124,9 @@ export default function PermissionsPage() {
   /** 重置表单 */
   const resetForm = () => {
     setFormData({
-      name: '',
-      description: '',
+      resource: '',
+      action: '',
+      display_name: '',
     });
   };
 
@@ -137,8 +140,9 @@ export default function PermissionsPage() {
   const openEditDialog = (permission: Permission) => {
     setSelectedPermission(permission);
     setFormData({
-      name: permission.name,
-      description: permission.description || '',
+      resource: permission.resource,
+      action: permission.action,
+      display_name: permission.display_name,
     });
     setIsEditDialogOpen(true);
   };
@@ -151,11 +155,11 @@ export default function PermissionsPage() {
 
   /** 创建权限 */
   const handleCreatePermission = async () => {
-    if (!formData.name) {
+    if (!formData.resource || !formData.action || !formData.display_name) {
       toast({
         variant: 'destructive',
         title: '验证失败',
-        description: '请输入权限名称',
+        description: '请填写资源名称、操作类型和显示名称',
       });
       return;
     }
@@ -163,14 +167,15 @@ export default function PermissionsPage() {
     setIsSubmitting(true);
     try {
       const data: CreatePermissionRequest = {
-        name: formData.name,
-        description: formData.description || undefined,
+        resource: formData.resource,
+        action: formData.action,
+        display_name: formData.display_name,
       };
 
       await permissionsApi.createPermission(data);
       toast({
         title: '创建成功',
-        description: `权限 ${formData.name} 已成功创建`,
+        description: `权限 ${formData.display_name} 已成功创建`,
       });
       setIsCreateDialogOpen(false);
       loadPermissions();
@@ -193,8 +198,7 @@ export default function PermissionsPage() {
     setIsSubmitting(true);
     try {
       const data: UpdatePermissionRequest = {
-        name: formData.name || undefined,
-        description: formData.description || undefined,
+        display_name: formData.display_name,
       };
 
       await permissionsApi.updatePermission(selectedPermission.id, data);
@@ -225,7 +229,7 @@ export default function PermissionsPage() {
       await permissionsApi.deletePermission(selectedPermission.id);
       toast({
         title: '删除成功',
-        description: `权限 ${selectedPermission.name} 已被删除`,
+        description: `权限 ${selectedPermission.display_name} 已被删除`,
       });
       setIsDeleteDialogOpen(false);
       loadPermissions();
@@ -239,15 +243,6 @@ export default function PermissionsPage() {
     } finally {
       setIsSubmitting(false);
     }
-  };
-
-  /** 解析权限名称获取资源和操作 */
-  const parsePermissionName = (name: string) => {
-    const parts = name.split(':');
-    if (parts.length === 2) {
-      return { resource: parts[0], action: parts[1] };
-    }
-    return { resource: name, action: '' };
   };
 
   /** 获取操作类型的颜色 */
@@ -292,7 +287,7 @@ export default function PermissionsPage() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
               <Input
                 type="search"
-                placeholder="搜索权限名称或描述..."
+                placeholder="搜索权限名称、资源或操作..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10"
@@ -332,10 +327,9 @@ export default function PermissionsPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>权限名称</TableHead>
+                <TableHead>显示名称</TableHead>
                 <TableHead>资源</TableHead>
                 <TableHead>操作</TableHead>
-                <TableHead>描述</TableHead>
                 <TableHead>创建时间</TableHead>
                 <TableHead className="text-right">操作</TableHead>
               </TableRow>
@@ -343,74 +337,64 @@ export default function PermissionsPage() {
             <TableBody>
               {isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-10">
+                  <TableCell colSpan={5} className="text-center py-10">
                     <RefreshCw className="h-6 w-6 animate-spin mx-auto text-slate-400" />
                     <p className="mt-2 text-sm text-slate-500">加载中...</p>
                   </TableCell>
                 </TableRow>
               ) : filteredPermissions.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-10">
+                  <TableCell colSpan={5} className="text-center py-10">
                     <p className="text-sm text-slate-500">
                       {searchQuery ? '没有找到匹配的权限' : '暂无权限数据'}
                     </p>
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredPermissions.map((permission) => {
-                  const { resource, action } = parsePermissionName(permission.name);
-                  return (
-                    <TableRow key={permission.id}>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Key className="h-4 w-4 text-slate-400" />
-                          <code className="px-2 py-0.5 bg-slate-100 rounded text-sm">
-                            {permission.name}
-                          </code>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline">{resource}</Badge>
-                      </TableCell>
-                      <TableCell>
-                        {action && (
-                          <Badge variant={getActionBadgeVariant(action)}>
-                            {action}
-                          </Badge>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-slate-500 max-w-xs truncate">
-                        {permission.description || '暂无描述'}
-                      </TableCell>
-                      <TableCell className="text-slate-500">
-                        {formatDateTime(permission.created_at)}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => openEditDialog(permission)}>
-                              <Edit className="mr-2 h-4 w-4" />
-                              编辑
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              onClick={() => openDeleteDialog(permission)}
-                              className="text-red-600 focus:text-red-600 focus:bg-red-50"
-                            >
-                              <Trash2 className="mr-2 h-4 w-4" />
-                              删除
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })
+                filteredPermissions.map((permission) => (
+                  <TableRow key={permission.id}>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Key className="h-4 w-4 text-slate-400" />
+                        <span className="font-medium">{permission.display_name}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline">{permission.resource}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={getActionBadgeVariant(permission.action)}>
+                        {permission.action}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-slate-500">
+                      {formatDateTime(permission.created_at)}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => openEditDialog(permission)}>
+                            <Edit className="mr-2 h-4 w-4" />
+                            编辑
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            onClick={() => openDeleteDialog(permission)}
+                            className="text-red-600 focus:text-red-600 focus:bg-red-50"
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            删除
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))
               )}
             </TableBody>
           </Table>
@@ -425,20 +409,20 @@ export default function PermissionsPage() {
         <CardContent>
           <div className="text-sm text-slate-600 space-y-2">
             <p>
-              推荐使用 <code className="px-1.5 py-0.5 bg-slate-100 rounded">资源:操作</code> 的格式命名权限，例如：
+              权限由 <code className="px-1.5 py-0.5 bg-slate-100 rounded">资源</code> 和 <code className="px-1.5 py-0.5 bg-slate-100 rounded">操作</code> 两部分组成，例如：
             </p>
             <ul className="list-disc list-inside space-y-1 ml-4">
               <li>
-                <code className="px-1.5 py-0.5 bg-slate-100 rounded">user:read</code> - 读取用户信息
+                资源 <code className="px-1.5 py-0.5 bg-slate-100 rounded">user</code> + 操作 <code className="px-1.5 py-0.5 bg-slate-100 rounded">read</code> = 读取用户信息
               </li>
               <li>
-                <code className="px-1.5 py-0.5 bg-slate-100 rounded">user:create</code> - 创建用户
+                资源 <code className="px-1.5 py-0.5 bg-slate-100 rounded">user</code> + 操作 <code className="px-1.5 py-0.5 bg-slate-100 rounded">create</code> = 创建用户
               </li>
               <li>
-                <code className="px-1.5 py-0.5 bg-slate-100 rounded">role:delete</code> - 删除角色
+                资源 <code className="px-1.5 py-0.5 bg-slate-100 rounded">role</code> + 操作 <code className="px-1.5 py-0.5 bg-slate-100 rounded">delete</code> = 删除角色
               </li>
               <li>
-                <code className="px-1.5 py-0.5 bg-slate-100 rounded">permission:update</code> - 更新权限
+                资源 <code className="px-1.5 py-0.5 bg-slate-100 rounded">permission</code> + 操作 <code className="px-1.5 py-0.5 bg-slate-100 rounded">update</code> = 更新权限
               </li>
             </ul>
           </div>
@@ -457,28 +441,42 @@ export default function PermissionsPage() {
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="create-name">权限名称 *</Label>
+              <Label htmlFor="create-resource">资源名称 *</Label>
               <Input
-                id="create-name"
-                value={formData.name}
+                id="create-resource"
+                value={formData.resource}
                 onChange={(e) =>
-                  setFormData({ ...formData, name: e.target.value })
+                  setFormData({ ...formData, resource: e.target.value })
                 }
-                placeholder="例如：user:read"
+                placeholder="如：user, role, system"
               />
               <p className="text-xs text-slate-500">
-                建议使用 资源:操作 的格式
+                只允许小写字母、数字和下划线
               </p>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="create-description">描述</Label>
+              <Label htmlFor="create-action">操作类型 *</Label>
               <Input
-                id="create-description"
-                value={formData.description}
+                id="create-action"
+                value={formData.action}
                 onChange={(e) =>
-                  setFormData({ ...formData, description: e.target.value })
+                  setFormData({ ...formData, action: e.target.value })
                 }
-                placeholder="请输入权限描述"
+                placeholder="如：create, read, update, delete"
+              />
+              <p className="text-xs text-slate-500">
+                只允许小写字母、数字和下划线
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="create-display-name">显示名称 *</Label>
+              <Input
+                id="create-display-name"
+                value={formData.display_name}
+                onChange={(e) =>
+                  setFormData({ ...formData, display_name: e.target.value })
+                }
+                placeholder="如：读取用户信息"
               />
             </div>
           </div>
@@ -505,30 +503,37 @@ export default function PermissionsPage() {
               编辑权限
             </DialogTitle>
             <DialogDescription>
-              修改权限 {selectedPermission?.name} 的信息
+              修改权限 {selectedPermission?.display_name} 的信息
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="edit-name">权限名称</Label>
+              <Label htmlFor="edit-resource">资源名称</Label>
               <Input
-                id="edit-name"
-                value={formData.name}
-                onChange={(e) =>
-                  setFormData({ ...formData, name: e.target.value })
-                }
-                placeholder="例如：user:read"
+                id="edit-resource"
+                value={formData.resource}
+                disabled
+                className="bg-slate-50"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="edit-description">描述</Label>
+              <Label htmlFor="edit-action">操作类型</Label>
               <Input
-                id="edit-description"
-                value={formData.description}
+                id="edit-action"
+                value={formData.action}
+                disabled
+                className="bg-slate-50"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-display-name">显示名称</Label>
+              <Input
+                id="edit-display-name"
+                value={formData.display_name}
                 onChange={(e) =>
-                  setFormData({ ...formData, description: e.target.value })
+                  setFormData({ ...formData, display_name: e.target.value })
                 }
-                placeholder="请输入权限描述"
+                placeholder="请输入显示名称"
               />
             </div>
           </div>
@@ -549,7 +554,7 @@ export default function PermissionsPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>确认删除权限</AlertDialogTitle>
             <AlertDialogDescription>
-              您确定要删除权限 <strong>{selectedPermission?.name}</strong> 吗？
+              您确定要删除权限 <strong>{selectedPermission?.display_name}</strong> 吗？
               此操作无法撤销，所有分配了此权限的角色将失去该权限。
             </AlertDialogDescription>
           </AlertDialogHeader>

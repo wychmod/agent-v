@@ -88,6 +88,7 @@ export default function RolesPage() {
   // 表单状态
   const [formData, setFormData] = useState({
     name: '',
+    display_name: '',
     description: '',
   });
   const [selectedPermissionId, setSelectedPermissionId] = useState('');
@@ -120,7 +121,7 @@ export default function RolesPage() {
   };
 
   /** 加载角色的权限 */
-  const loadRolePermissions = async (roleId: string) => {
+  const loadRolePermissions = async (roleId: number) => {
     try {
       const response = await rolesApi.getRolePermissions(roleId);
       setRolePermissions(response || []);
@@ -139,6 +140,7 @@ export default function RolesPage() {
   const resetForm = () => {
     setFormData({
       name: '',
+      display_name: '',
       description: '',
     });
     setSelectedPermissionId('');
@@ -155,6 +157,7 @@ export default function RolesPage() {
     setSelectedRole(role);
     setFormData({
       name: role.name,
+      display_name: role.display_name,
       description: role.description || '',
     });
     setIsEditDialogOpen(true);
@@ -176,11 +179,11 @@ export default function RolesPage() {
 
   /** 创建角色 */
   const handleCreateRole = async () => {
-    if (!formData.name) {
+    if (!formData.name || !formData.display_name) {
       toast({
         variant: 'destructive',
         title: '验证失败',
-        description: '请输入角色名称',
+        description: '请输入角色名称和显示名称',
       });
       return;
     }
@@ -189,13 +192,14 @@ export default function RolesPage() {
     try {
       const data: CreateRoleRequest = {
         name: formData.name,
+        display_name: formData.display_name,
         description: formData.description || undefined,
       };
 
       await rolesApi.createRole(data);
       toast({
         title: '创建成功',
-        description: `角色 ${formData.name} 已成功创建`,
+        description: `角色 ${formData.display_name} 已成功创建`,
       });
       setIsCreateDialogOpen(false);
       loadRoles();
@@ -218,7 +222,7 @@ export default function RolesPage() {
     setIsSubmitting(true);
     try {
       const data: UpdateRoleRequest = {
-        name: formData.name || undefined,
+        display_name: formData.display_name || undefined,
         description: formData.description || undefined,
       };
 
@@ -250,7 +254,7 @@ export default function RolesPage() {
       await rolesApi.deleteRole(selectedRole.id);
       toast({
         title: '删除成功',
-        description: `角色 ${selectedRole.name} 已被删除`,
+        description: `角色 ${selectedRole.display_name || selectedRole.name} 已被删除`,
       });
       setIsDeleteDialogOpen(false);
       loadRoles();
@@ -272,7 +276,7 @@ export default function RolesPage() {
 
     setIsSubmitting(true);
     try {
-      await rolesApi.assignPermission(selectedRole.id, selectedPermissionId);
+      await rolesApi.assignPermission(selectedRole.id, Number(selectedPermissionId));
       toast({
         title: '分配成功',
         description: '权限已成功分配给角色',
@@ -292,7 +296,7 @@ export default function RolesPage() {
   };
 
   /** 移除权限 */
-  const handleRemovePermission = async (permissionId: string) => {
+  const handleRemovePermission = async (permissionId: number) => {
     if (!selectedRole) return;
 
     try {
@@ -354,6 +358,7 @@ export default function RolesPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>角色名称</TableHead>
+                <TableHead>显示名称</TableHead>
                 <TableHead>描述</TableHead>
                 <TableHead>类型</TableHead>
                 <TableHead>创建时间</TableHead>
@@ -363,14 +368,14 @@ export default function RolesPage() {
             <TableBody>
               {isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center py-10">
+                  <TableCell colSpan={6} className="text-center py-10">
                     <RefreshCw className="h-6 w-6 animate-spin mx-auto text-slate-400" />
                     <p className="mt-2 text-sm text-slate-500">加载中...</p>
                   </TableCell>
                 </TableRow>
               ) : roles.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center py-10">
+                  <TableCell colSpan={6} className="text-center py-10">
                     <p className="text-sm text-slate-500">暂无角色数据</p>
                   </TableCell>
                 </TableRow>
@@ -380,8 +385,11 @@ export default function RolesPage() {
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <Shield className="h-4 w-4 text-slate-400" />
-                        <span className="font-medium">{role.name}</span>
+                        <code className="text-sm">{role.name}</code>
                       </div>
+                    </TableCell>
+                    <TableCell className="font-medium">
+                      {role.display_name}
                     </TableCell>
                     <TableCell className="text-slate-500">
                       {role.description || '暂无描述'}
@@ -444,14 +452,28 @@ export default function RolesPage() {
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="create-name">角色名称 *</Label>
+              <Label htmlFor="create-name">角色标识 *</Label>
               <Input
                 id="create-name"
                 value={formData.name}
                 onChange={(e) =>
                   setFormData({ ...formData, name: e.target.value })
                 }
-                placeholder="请输入角色名称"
+                placeholder="小写字母、数字和下划线，如 editor"
+              />
+              <p className="text-xs text-slate-500">
+                只允许小写字母、数字和下划线，且必须以字母开头
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="create-display-name">显示名称 *</Label>
+              <Input
+                id="create-display-name"
+                value={formData.display_name}
+                onChange={(e) =>
+                  setFormData({ ...formData, display_name: e.target.value })
+                }
+                placeholder="如：编辑者"
               />
             </div>
             <div className="space-y-2">
@@ -489,24 +511,30 @@ export default function RolesPage() {
               编辑角色
             </DialogTitle>
             <DialogDescription>
-              修改角色 {selectedRole?.name} 的信息
+              修改角色 {selectedRole?.display_name || selectedRole?.name} 的信息
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="edit-name">角色名称</Label>
+              <Label htmlFor="edit-name">角色标识</Label>
               <Input
                 id="edit-name"
                 value={formData.name}
-                onChange={(e) =>
-                  setFormData({ ...formData, name: e.target.value })
-                }
-                placeholder="请输入角色名称"
-                disabled={selectedRole ? isSystemRole(selectedRole.name) : false}
+                disabled
+                className="bg-slate-50"
               />
-              {selectedRole && isSystemRole(selectedRole.name) && (
-                <p className="text-xs text-slate-500">系统角色名称不可修改</p>
-              )}
+              <p className="text-xs text-slate-500">角色标识创建后不可修改</p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-display-name">显示名称</Label>
+              <Input
+                id="edit-display-name"
+                value={formData.display_name}
+                onChange={(e) =>
+                  setFormData({ ...formData, display_name: e.target.value })
+                }
+                placeholder="请输入显示名称"
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="edit-description">描述</Label>
@@ -537,7 +565,7 @@ export default function RolesPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>确认删除角色</AlertDialogTitle>
             <AlertDialogDescription>
-              您确定要删除角色 <strong>{selectedRole?.name}</strong> 吗？
+              您确定要删除角色 <strong>{selectedRole?.display_name || selectedRole?.name}</strong> 吗？
               此操作无法撤销，所有拥有此角色的用户将失去相关权限。
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -562,7 +590,7 @@ export default function RolesPage() {
               管理权限
             </DialogTitle>
             <DialogDescription>
-              为角色 {selectedRole?.name} 分配权限
+              为角色 {selectedRole?.display_name || selectedRole?.name} 分配权限
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
@@ -580,13 +608,8 @@ export default function RolesPage() {
                         (p) => !rolePermissions.some((rp) => rp.id === p.id)
                       )
                       .map((permission) => (
-                        <SelectItem key={permission.id} value={permission.id}>
-                          {permission.name}
-                          {permission.description && (
-                            <span className="text-slate-400 ml-2">
-                              - {permission.description}
-                            </span>
-                          )}
+                        <SelectItem key={permission.id} value={permission.id.toString()}>
+                          {permission.display_name} ({permission.resource}:{permission.action})
                         </SelectItem>
                       ))}
                   </SelectContent>
@@ -615,12 +638,10 @@ export default function RolesPage() {
                       className="flex items-center justify-between p-3 hover:bg-slate-50"
                     >
                       <div>
-                        <p className="font-medium text-sm">{permission.name}</p>
-                        {permission.description && (
-                          <p className="text-xs text-slate-500">
-                            {permission.description}
-                          </p>
-                        )}
+                        <p className="font-medium text-sm">{permission.display_name}</p>
+                        <p className="text-xs text-slate-500">
+                          {permission.resource}:{permission.action}
+                        </p>
                       </div>
                       <Button
                         variant="ghost"

@@ -31,7 +31,7 @@ import {
 } from '@/components/ui/select';
 import { statusApi } from '@/lib/api/status';
 import { useToast } from '@/lib/hooks/use-toast';
-import type { SystemStatus } from '@/types';
+import type { HealthStatus } from '@/types';
 
 /** 主题类型 */
 type Theme = 'light' | 'dark' | 'system';
@@ -39,11 +39,21 @@ type Theme = 'light' | 'dark' | 'system';
 /** 语言类型 */
 type Language = 'zh-CN' | 'en-US';
 
+/** 从 HealthStatus 数组中判断整体系统是否健康 */
+function isSystemHealthy(statuses: HealthStatus[]): boolean {
+  return statuses.length > 0 && statuses.every((s) => s.status === 'ok');
+}
+
+/** 从 HealthStatus 数组中查找指定服务的状态 */
+function getServiceStatus(statuses: HealthStatus[], service: string): HealthStatus | undefined {
+  return statuses.find((s) => s.service.toLowerCase().includes(service.toLowerCase()));
+}
+
 export default function SettingsPage() {
   const { toast } = useToast();
   
   // 系统状态
-  const [systemStatus, setSystemStatus] = useState<SystemStatus | null>(null);
+  const [healthStatuses, setHealthStatuses] = useState<HealthStatus[]>([]);
   const [isLoadingStatus, setIsLoadingStatus] = useState(true);
 
   // 设置状态
@@ -59,8 +69,8 @@ export default function SettingsPage() {
   const loadSystemStatus = useCallback(async () => {
     setIsLoadingStatus(true);
     try {
-      const status = await statusApi.getStatus();
-      setSystemStatus(status);
+      const statuses = await statusApi.getStatus();
+      setHealthStatuses(statuses);
     } catch (error) {
       toast({
         variant: 'destructive',
@@ -129,6 +139,10 @@ export default function SettingsPage() {
         return <Monitor className="h-4 w-4" />;
     }
   };
+
+  const healthy = isSystemHealthy(healthStatuses);
+  const dbStatus = getServiceStatus(healthStatuses, 'mysql') || getServiceStatus(healthStatuses, 'postgres');
+  const dbConnected = dbStatus?.status === 'ok';
 
   return (
     <div className="space-y-6 max-w-4xl">
@@ -284,8 +298,8 @@ export default function SettingsPage() {
                   {isLoadingStatus ? (
                     <Badge variant="secondary">检测中...</Badge>
                   ) : (
-                    <Badge variant={systemStatus?.status === 'healthy' ? 'success' : 'destructive'}>
-                      {systemStatus?.status === 'healthy' ? '正常运行' : '状态异常'}
+                    <Badge variant={healthy ? 'success' : 'destructive'}>
+                      {healthy ? '正常运行' : '状态异常'}
                     </Badge>
                   )}
                 </div>
@@ -301,38 +315,30 @@ export default function SettingsPage() {
                   {isLoadingStatus ? (
                     <Badge variant="secondary">检测中...</Badge>
                   ) : (
-                    <Badge variant={systemStatus?.database === 'connected' ? 'success' : 'destructive'}>
-                      {systemStatus?.database === 'connected' ? '已连接' : '未连接'}
+                    <Badge variant={dbConnected ? 'success' : 'destructive'}>
+                      {dbConnected ? '已连接' : '未连接'}
                     </Badge>
                   )}
                 </div>
               </div>
 
-              {/* API 版本 */}
-              <div className="p-4 bg-slate-50 rounded-lg">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Settings className="h-4 w-4 text-slate-400" />
-                    <span className="text-sm font-medium">API 版本</span>
+              {/* 各服务状态 */}
+              {healthStatuses.map((s) => (
+                <div key={s.service} className="p-4 bg-slate-50 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Settings className="h-4 w-4 text-slate-400" />
+                      <span className="text-sm font-medium">{s.service}</span>
+                    </div>
+                    <Badge variant={s.status === 'ok' ? 'success' : 'destructive'}>
+                      {s.status === 'ok' ? '正常' : '异常'}
+                    </Badge>
                   </div>
-                  <span className="text-sm font-mono">
-                    {systemStatus?.version || 'N/A'}
-                  </span>
+                  {s.details && (
+                    <p className="text-xs text-slate-500 mt-1 ml-6">{s.details}</p>
+                  )}
                 </div>
-              </div>
-
-              {/* 状态消息 */}
-              <div className="p-4 bg-slate-50 rounded-lg">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Bell className="h-4 w-4 text-slate-400" />
-                    <span className="text-sm font-medium">状态消息</span>
-                  </div>
-                  <span className="text-sm text-slate-600">
-                    {systemStatus?.message || '一切正常'}
-                  </span>
-                </div>
-              </div>
+              ))}
             </div>
           </CardContent>
         </Card>

@@ -14,23 +14,23 @@ import type {
 /** 获取所有权限 */
 async function getPermissions(): Promise<Permission[]> {
   const response = await apiClient.get('/permissions');
-  return response.data;
+  return response.data.data;
 }
 
 /** 创建权限 */
 async function createPermission(data: CreatePermissionRequest): Promise<Permission> {
   const response = await apiClient.post('/permissions', data);
-  return response.data;
+  return response.data.data;
 }
 
 /** 更新权限 */
-async function updatePermission(permissionId: string, data: UpdatePermissionRequest): Promise<Permission> {
+async function updatePermission(permissionId: number, data: UpdatePermissionRequest): Promise<Permission> {
   const response = await apiClient.put(`/permissions/${permissionId}`, data);
-  return response.data;
+  return response.data.data;
 }
 
 /** 删除权限 */
-async function deletePermission(permissionId: string): Promise<void> {
+async function deletePermission(permissionId: number): Promise<void> {
   await apiClient.delete(`/permissions/${permissionId}`);
 }
 

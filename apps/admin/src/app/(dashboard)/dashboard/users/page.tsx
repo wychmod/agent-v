@@ -69,13 +69,13 @@ import { usersApi } from '@/lib/api/users';
 import { rolesApi } from '@/lib/api/roles';
 import { useToast } from '@/lib/hooks/use-toast';
 import { formatDateTime } from '@/lib/utils';
-import type { UserInfo, Role, AdminCreateUserRequest, AdminUpdateUserRequest } from '@/types';
+import type { UserDetail, Role, AdminCreateUserRequest, AdminUpdateUserRequest } from '@/types';
 
 export default function UsersPage() {
   const { toast } = useToast();
 
   // 状态管理
-  const [users, setUsers] = useState<UserInfo[]>([]);
+  const [users, setUsers] = useState<UserDetail[]>([]);
   const [roles, setRoles] = useState<Role[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -90,7 +90,7 @@ export default function UsersPage() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isAssignRoleDialogOpen, setIsAssignRoleDialogOpen] = useState(false);
   const [isBatchDeleteDialogOpen, setIsBatchDeleteDialogOpen] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<UserInfo | null>(null);
+  const [selectedUser, setSelectedUser] = useState<UserDetail | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // 批量选择状态
@@ -103,16 +103,15 @@ export default function UsersPage() {
     password: '',
     is_active: true,
   });
-  const [selectedRoleId, setSelectedRoleId] = useState('');
+  const [selectedRoleName, setSelectedRoleName] = useState('');
 
   /** 加载用户列表 */
   const loadUsers = useCallback(async () => {
     setIsLoading(true);
     try {
       const response = await usersApi.getUsers({
-        page: currentPage,
-        page_size: pageSize,
-        search: searchQuery || undefined,
+        skip: (currentPage - 1) * pageSize,
+        limit: pageSize,
       });
 
       setUsers(response.items || []);
@@ -127,7 +126,7 @@ export default function UsersPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [currentPage, searchQuery, toast]);
+  }, [currentPage, toast]);
 
   /** 加载角色列表 */
   const loadRoles = useCallback(async () => {
@@ -159,7 +158,7 @@ export default function UsersPage() {
       password: '',
       is_active: true,
     });
-    setSelectedRoleId('');
+    setSelectedRoleName('');
   };
 
   /** 打开创建对话框 */
@@ -169,7 +168,7 @@ export default function UsersPage() {
   };
 
   /** 打开编辑对话框 */
-  const openEditDialog = (user: UserInfo) => {
+  const openEditDialog = (user: UserDetail) => {
     setSelectedUser(user);
     setFormData({
       username: user.username,
@@ -181,15 +180,15 @@ export default function UsersPage() {
   };
 
   /** 打开删除确认对话框 */
-  const openDeleteDialog = (user: UserInfo) => {
+  const openDeleteDialog = (user: UserDetail) => {
     setSelectedUser(user);
     setIsDeleteDialogOpen(true);
   };
 
   /** 打开分配角色对话框 */
-  const openAssignRoleDialog = (user: UserInfo) => {
+  const openAssignRoleDialog = (user: UserDetail) => {
     setSelectedUser(user);
-    setSelectedRoleId('');
+    setSelectedRoleName('');
     setIsAssignRoleDialogOpen(true);
   };
 
@@ -241,7 +240,6 @@ export default function UsersPage() {
       const data: AdminUpdateUserRequest = {
         username: formData.username || undefined,
         email: formData.email || undefined,
-        password: formData.password || undefined,
         is_active: formData.is_active,
       };
 
@@ -289,13 +287,13 @@ export default function UsersPage() {
     }
   };
 
-  /** 分配角色 */
+  /** 分配角色（使用角色名称） */
   const handleAssignRole = async () => {
-    if (!selectedUser || !selectedRoleId) return;
+    if (!selectedUser || !selectedRoleName) return;
 
     setIsSubmitting(true);
     try {
-      await usersApi.assignRole(selectedUser.id, selectedRoleId);
+      await usersApi.assignRole(selectedUser.id, selectedRoleName);
       toast({
         title: '分配成功',
         description: '角色已成功分配给用户',
@@ -314,10 +312,10 @@ export default function UsersPage() {
     }
   };
 
-  /** 移除角色 */
-  const handleRemoveRole = async (user: UserInfo, roleId: string) => {
+  /** 移除角色（使用角色名称） */
+  const handleRemoveRole = async (user: UserDetail, roleName: string) => {
     try {
-      await usersApi.removeRole(user.id, roleId);
+      await usersApi.removeRole(user.id, roleName);
       toast({
         title: '移除成功',
         description: '角色已从用户移除',
@@ -389,7 +387,7 @@ export default function UsersPage() {
       user.username,
       user.email,
       user.is_active ? '活跃' : '禁用',
-      user.roles?.map((r) => r.name).join('; ') || '无',
+      user.roles?.map((r) => r.display_name || r.name).join('; ') || '无',
       user.created_at,
     ]);
 
@@ -569,10 +567,10 @@ export default function UsersPage() {
                               key={role.id}
                               variant="secondary"
                               className="cursor-pointer hover:bg-slate-200"
-                              onClick={() => handleRemoveRole(user, role.id)}
+                              onClick={() => handleRemoveRole(user, role.name)}
                               title="点击移除此角色"
                             >
-                              {role.name}
+                              {role.display_name || role.name}
                             </Badge>
                           ))
                         ) : (
@@ -761,18 +759,6 @@ export default function UsersPage() {
                 placeholder="请输入邮箱地址"
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit-password">新密码（留空则不修改）</Label>
-              <Input
-                id="edit-password"
-                type="password"
-                value={formData.password}
-                onChange={(e) =>
-                  setFormData({ ...formData, password: e.target.value })
-                }
-                placeholder="请输入新密码"
-              />
-            </div>
             <div className="flex items-center gap-2">
               <input
                 type="checkbox"
@@ -821,7 +807,7 @@ export default function UsersPage() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* 分配角色对话框 */}
+      {/* 分配角色对话框（使用角色名称） */}
       <Dialog open={isAssignRoleDialogOpen} onOpenChange={setIsAssignRoleDialogOpen}>
         <DialogContent>
           <DialogHeader>
@@ -836,14 +822,14 @@ export default function UsersPage() {
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label>选择角色</Label>
-              <Select value={selectedRoleId} onValueChange={setSelectedRoleId}>
+              <Select value={selectedRoleName} onValueChange={setSelectedRoleName}>
                 <SelectTrigger>
                   <SelectValue placeholder="请选择一个角色" />
                 </SelectTrigger>
                 <SelectContent>
                   {roles.map((role) => (
-                    <SelectItem key={role.id} value={role.id}>
-                      {role.name}
+                    <SelectItem key={role.id} value={role.name}>
+                      {role.display_name || role.name}
                       {role.description && (
                         <span className="text-slate-400 ml-2">
                           - {role.description}
@@ -860,7 +846,7 @@ export default function UsersPage() {
                 <div className="flex flex-wrap gap-2">
                   {selectedUser.roles.map((role) => (
                     <Badge key={role.id} variant="secondary">
-                      {role.name}
+                      {role.display_name || role.name}
                     </Badge>
                   ))}
                 </div>
@@ -876,7 +862,7 @@ export default function UsersPage() {
             </Button>
             <Button
               onClick={handleAssignRole}
-              disabled={isSubmitting || !selectedRoleId}
+              disabled={isSubmitting || !selectedRoleName}
             >
               {isSubmitting ? '分配中...' : '分配'}
             </Button>

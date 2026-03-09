@@ -26,7 +26,7 @@ import { usersApi } from '@/lib/api/users';
 import { rolesApi } from '@/lib/api/roles';
 import { permissionsApi } from '@/lib/api/permissions';
 import { useToast } from '@/lib/hooks/use-toast';
-import type { SystemStatus } from '@/types';
+import type { HealthStatus } from '@/types';
 
 /** 统计卡片数据 */
 interface StatCard {
@@ -37,11 +37,21 @@ interface StatCard {
   href: string;
 }
 
+/** 从 HealthStatus 数组中判断整体系统是否健康 */
+function isSystemHealthy(statuses: HealthStatus[]): boolean {
+  return statuses.length > 0 && statuses.every((s) => s.status === 'ok');
+}
+
+/** 从 HealthStatus 数组中查找指定服务的状态 */
+function getServiceStatus(statuses: HealthStatus[], service: string): HealthStatus | undefined {
+  return statuses.find((s) => s.service.toLowerCase().includes(service.toLowerCase()));
+}
+
 export default function DashboardPage() {
   const { user } = useAuthStore();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
-  const [systemStatus, setSystemStatus] = useState<SystemStatus | null>(null);
+  const [healthStatuses, setHealthStatuses] = useState<HealthStatus[]>([]);
   const [stats, setStats] = useState({
     users: 0,
     roles: 0,
@@ -54,7 +64,7 @@ export default function DashboardPage() {
     try {
       // 并行加载所有数据
       const [usersRes, rolesRes, permissionsRes, statusRes] = await Promise.all([
-        usersApi.getUsers({ page: 1, page_size: 1 }),
+        usersApi.getUsers({ skip: 0, limit: 1 }),
         rolesApi.getRoles(),
         permissionsApi.getPermissions(),
         statusApi.getStatus(),
@@ -65,7 +75,7 @@ export default function DashboardPage() {
         roles: rolesRes.length || 0,
         permissions: permissionsRes.length || 0,
       });
-      setSystemStatus(statusRes);
+      setHealthStatuses(statusRes);
     } catch (error) {
       toast({
         variant: 'destructive',
@@ -80,6 +90,10 @@ export default function DashboardPage() {
   useEffect(() => {
     loadStats();
   }, [loadStats]);
+
+  const healthy = isSystemHealthy(healthStatuses);
+  const dbStatus = getServiceStatus(healthStatuses, 'mysql') || getServiceStatus(healthStatuses, 'postgres');
+  const dbConnected = dbStatus?.status === 'ok';
 
   /** 统计卡片配置 */
   const statCards: StatCard[] = [
@@ -106,8 +120,8 @@ export default function DashboardPage() {
     },
     {
       title: '系统状态',
-      value: systemStatus?.status === 'healthy' ? '正常' : '异常',
-      description: systemStatus?.message || '检测中...',
+      value: healthy ? '正常' : '异常',
+      description: healthy ? '所有服务运行正常' : '部分服务存在异常',
       icon: Activity,
       href: '#',
     },
@@ -221,29 +235,27 @@ export default function DashboardPage() {
             <div className="flex items-center justify-between">
               <span className="text-sm text-slate-600">系统状态</span>
               <Badge
-                variant={
-                  systemStatus?.status === 'healthy' ? 'success' : 'destructive'
-                }
+                variant={healthy ? 'success' : 'destructive'}
               >
-                {systemStatus?.status === 'healthy' ? '正常运行' : '状态异常'}
+                {healthy ? '正常运行' : '状态异常'}
               </Badge>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm text-slate-600">数据库连接</span>
               <Badge
-                variant={
-                  systemStatus?.database === 'connected' ? 'success' : 'destructive'
-                }
+                variant={dbConnected ? 'success' : 'destructive'}
               >
-                {systemStatus?.database === 'connected' ? '已连接' : '未连接'}
+                {dbConnected ? '已连接' : '未连接'}
               </Badge>
             </div>
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-slate-600">API 版本</span>
-              <span className="text-sm font-medium">
-                {systemStatus?.version || 'N/A'}
-              </span>
-            </div>
+            {healthStatuses.map((s) => (
+              <div key={s.service} className="flex items-center justify-between">
+                <span className="text-sm text-slate-600">{s.service}</span>
+                <Badge variant={s.status === 'ok' ? 'success' : 'destructive'}>
+                  {s.status === 'ok' ? '正常' : '异常'}
+                </Badge>
+              </div>
+            ))}
             <div className="flex items-center justify-between">
               <span className="text-sm text-slate-600">当前登录</span>
               <div className="flex items-center gap-2">

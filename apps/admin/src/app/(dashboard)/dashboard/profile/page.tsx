@@ -78,11 +78,21 @@ export default function ProfilePage() {
 
     setIsSubmitting(true);
     try {
-      const updatedUser = await usersApi.updateUser(user.id, {
+      const updatedDetail = await usersApi.updateUser(user.id, {
         username: formData.username,
         email: formData.email,
       });
-      setUser(updatedUser);
+      // 将 UserDetail 映射为 UserInfo（auth store 存储的格式）
+      setUser({
+        id: updatedDetail.id,
+        email: updatedDetail.email,
+        username: updatedDetail.username,
+        is_active: updatedDetail.is_active,
+        is_verified: updatedDetail.is_verified,
+        must_change_password: updatedDetail.must_change_password,
+        roles: updatedDetail.roles.map((r) => r.name),
+        created_at: updatedDetail.created_at,
+      });
       toast({
         title: '保存成功',
         description: '个人信息已更新',
@@ -192,15 +202,15 @@ export default function ProfilePage() {
                   <Badge variant="secondary">已验证</Badge>
                 )}
               </div>
-              {/* 用户角色 */}
+              {/* 用户角色（roles 为字符串数组） */}
               {user?.roles && user.roles.length > 0 && (
                 <div className="mt-4 w-full">
                   <p className="text-xs text-slate-400 mb-2">角色</p>
                   <div className="flex flex-wrap justify-center gap-1">
-                    {user.roles.map((role) => (
-                      <Badge key={role.id} variant="outline" className="text-xs">
+                    {user.roles.map((roleName) => (
+                      <Badge key={roleName} variant="outline" className="text-xs">
                         <Shield className="h-3 w-3 mr-1" />
-                        {role.name}
+                        {roleName}
                       </Badge>
                     ))}
                   </div>
