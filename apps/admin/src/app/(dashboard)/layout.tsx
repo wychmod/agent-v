@@ -7,6 +7,7 @@
 
 'use client';
 
+import { useTheme } from '@/lib/contexts/theme-context';
 import { Sidebar, Header } from '@/components/layout';
 
 export default function DashboardLayout({
@@ -14,6 +15,23 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const { mounted } = useTheme();
+
+  // 防止 hydration 不匹配，挂载前显示占位
+  if (!mounted) {
+    return (
+      <div className="flex h-screen bg-slate-50">
+        {/* 侧边栏占位 */}
+        <div className="w-64 h-screen bg-slate-900" />
+        {/* 主内容区域占位 */}
+        <div className="flex flex-col flex-1 overflow-hidden">
+          <div className="h-16 bg-white border-b border-slate-200" />
+          <main className="flex-1 overflow-y-auto p-6" />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex h-screen bg-slate-50 dark:bg-slate-950">
       {/* 侧边栏 */}

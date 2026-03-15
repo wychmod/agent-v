@@ -12,6 +12,8 @@ import type { ApiResponse, TokenResponse } from '@/types';
 interface ErrorResponse {
   message?: string;
   detail?: string;
+  code?: number;
+  data?: Record<string, unknown>;
 }
 
 /** API 基础 URL */
@@ -65,8 +67,13 @@ apiClient.interceptors.response.use(
       _retry?: boolean;
     };
 
-    // 处理 401 错误：尝试刷新 Token
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    // 获取请求路径
+    const requestUrl = originalRequest?.url || '';
+    // 登录相关接口不走自动跳转逻辑，让调用方自行处理错误
+    const isAuthRequest = requestUrl.includes('/auth/login') || requestUrl.includes('/auth/register');
+
+    // 处理 401 错误：尝试刷新 Token（排除登录/注册接口）
+    if (error.response?.status === 401 && !originalRequest._retry && !isAuthRequest) {
       const { refreshToken, clearAuth } = useAuthStore.getState();
 
       // 如果没有刷新令牌，直接登出
@@ -120,9 +127,22 @@ apiClient.interceptors.response.use(
       }
     }
 
-    // 提取错误信息
-    const errorMessage =
-      error.response?.data?.detail || error.response?.data?.message || error.message || '请求失败，请稍后重试';
+    // 提取错误信息 - 支持多种后端错误格式
+    const errorData = error.response?.data;
+    let errorMessage = '请求失败，请稍后重试';
+    
+    if (errorData) {
+      // 优先使用 message 字段（如：{"code":422,"message":"密码必须..."}）
+      if (errorData.message) {
+        errorMessage = errorData.message;
+      }
+      // 其次使用 detail 字段
+      else if (errorData.detail) {
+        errorMessage = errorData.detail;
+      }
+    } else if (error.message) {
+      errorMessage = error.message;
+    }
 
     return Promise.reject(new Error(errorMessage));
   }

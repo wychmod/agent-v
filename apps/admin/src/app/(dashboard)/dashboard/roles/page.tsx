@@ -7,7 +7,6 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { AxiosError } from 'axios';
 import {
   Plus,
   Edit,
@@ -204,11 +203,11 @@ export default function RolesPage() {
       setIsCreateDialogOpen(false);
       loadRoles();
     } catch (error) {
-      const axiosError = error as AxiosError<{ detail?: string }>;
+      const errorMessage = error instanceof Error ? error.message : '无法创建角色';
       toast({
         variant: 'destructive',
         title: '创建失败',
-        description: axiosError.response?.data?.detail || '无法创建角色',
+        description: errorMessage,
       });
     } finally {
       setIsSubmitting(false);
@@ -234,11 +233,11 @@ export default function RolesPage() {
       setIsEditDialogOpen(false);
       loadRoles();
     } catch (error) {
-      const axiosError = error as AxiosError<{ detail?: string }>;
+      const errorMessage = error instanceof Error ? error.message : '无法更新角色';
       toast({
         variant: 'destructive',
         title: '更新失败',
-        description: axiosError.response?.data?.detail || '无法更新角色',
+        description: errorMessage,
       });
     } finally {
       setIsSubmitting(false);
@@ -259,11 +258,11 @@ export default function RolesPage() {
       setIsDeleteDialogOpen(false);
       loadRoles();
     } catch (error) {
-      const axiosError = error as AxiosError<{ detail?: string }>;
+      const errorMessage = error instanceof Error ? error.message : '无法删除角色';
       toast({
         variant: 'destructive',
         title: '删除失败',
-        description: axiosError.response?.data?.detail || '无法删除角色',
+        description: errorMessage,
       });
     } finally {
       setIsSubmitting(false);
@@ -284,11 +283,11 @@ export default function RolesPage() {
       await loadRolePermissions(selectedRole.id);
       setSelectedPermissionId('');
     } catch (error) {
-      const axiosError = error as AxiosError<{ detail?: string }>;
+      const errorMessage = error instanceof Error ? error.message : '无法分配权限';
       toast({
         variant: 'destructive',
         title: '分配失败',
-        description: axiosError.response?.data?.detail || '无法分配权限',
+        description: errorMessage,
       });
     } finally {
       setIsSubmitting(false);
@@ -307,11 +306,11 @@ export default function RolesPage() {
       });
       await loadRolePermissions(selectedRole.id);
     } catch (error) {
-      const axiosError = error as AxiosError<{ detail?: string }>;
+      const errorMessage = error instanceof Error ? error.message : '无法移除权限';
       toast({
         variant: 'destructive',
         title: '移除失败',
-        description: axiosError.response?.data?.detail || '无法移除权限',
+        description: errorMessage,
       });
     }
   };

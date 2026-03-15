@@ -13,12 +13,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useAuthStore } from '@/lib/store/auth-store';
 import { login } from '@/lib/api/auth';
 import { toast } from '@/lib/hooks/use-toast';
-import { Lock, Mail, Loader2 } from 'lucide-react';
+import { Lock, Mail, Loader2, AlertCircle } from 'lucide-react';
 
 export default function LoginForm() {
   const router = useRouter();
   const { setAuth } = useAuthStore();
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -26,8 +27,10 @@ export default function LoginForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
     
     if (!formData.email || !formData.password) {
+      setError('请填写邮箱和密码');
       toast({
         title: '请填写完整信息',
         description: '邮箱和密码不能为空',
@@ -48,11 +51,14 @@ export default function LoginForm() {
       });
       
       router.push('/dashboard');
-    } catch (error) {
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : '请检查邮箱和密码是否正确';
+      setError(errorMessage);
       toast({
         title: '登录失败',
-        description: error instanceof Error ? error.message : '请检查邮箱和密码是否正确',
+        description: errorMessage,
         variant: 'destructive',
+        duration: 5000, // 5秒后自动关闭
       });
     } finally {
       setIsLoading(false);
@@ -81,6 +87,13 @@ export default function LoginForm() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
+            {/* 错误信息提示 */}
+            {error && (
+              <div className="flex items-center gap-2 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+                <AlertCircle className="h-4 w-4 flex-shrink-0" />
+                <span>{error}</span>
+              </div>
+            )}
             <div className="space-y-2">
               <Label htmlFor="email" className="text-slate-300">
                 邮箱地址

@@ -7,7 +7,6 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { AxiosError } from 'axios';
 import {
   Search,
   Plus,
@@ -220,11 +219,11 @@ export default function UsersPage() {
       setIsCreateDialogOpen(false);
       loadUsers();
     } catch (error) {
-      const axiosError = error as AxiosError<{ detail?: string }>;
+      const errorMessage = error instanceof Error ? error.message : '无法创建用户';
       toast({
         variant: 'destructive',
         title: '创建失败',
-        description: axiosError.response?.data?.detail || '无法创建用户',
+        description: errorMessage,
       });
     } finally {
       setIsSubmitting(false);
@@ -251,11 +250,11 @@ export default function UsersPage() {
       setIsEditDialogOpen(false);
       loadUsers();
     } catch (error) {
-      const axiosError = error as AxiosError<{ detail?: string }>;
+      const errorMessage = error instanceof Error ? error.message : '无法更新用户';
       toast({
         variant: 'destructive',
         title: '更新失败',
-        description: axiosError.response?.data?.detail || '无法更新用户',
+        description: errorMessage,
       });
     } finally {
       setIsSubmitting(false);
@@ -276,11 +275,11 @@ export default function UsersPage() {
       setIsDeleteDialogOpen(false);
       loadUsers();
     } catch (error) {
-      const axiosError = error as AxiosError<{ detail?: string }>;
+      const errorMessage = error instanceof Error ? error.message : '无法删除用户';
       toast({
         variant: 'destructive',
         title: '删除失败',
-        description: axiosError.response?.data?.detail || '无法删除用户',
+        description: errorMessage,
       });
     } finally {
       setIsSubmitting(false);
@@ -301,11 +300,11 @@ export default function UsersPage() {
       setIsAssignRoleDialogOpen(false);
       loadUsers();
     } catch (error) {
-      const axiosError = error as AxiosError<{ detail?: string }>;
+      const errorMessage = error instanceof Error ? error.message : '无法分配角色';
       toast({
         variant: 'destructive',
         title: '分配失败',
-        description: axiosError.response?.data?.detail || '无法分配角色',
+        description: errorMessage,
       });
     } finally {
       setIsSubmitting(false);
@@ -322,11 +321,11 @@ export default function UsersPage() {
       });
       loadUsers();
     } catch (error) {
-      const axiosError = error as AxiosError<{ detail?: string }>;
+      const errorMessage = error instanceof Error ? error.message : '无法移除角色';
       toast({
         variant: 'destructive',
         title: '移除失败',
-        description: axiosError.response?.data?.detail || '无法移除角色',
+        description: errorMessage,
       });
     }
   };
@@ -369,11 +368,11 @@ export default function UsersPage() {
       setIsBatchDeleteDialogOpen(false);
       loadUsers();
     } catch (error) {
-      const axiosError = error as AxiosError<{ detail?: string }>;
+      const errorMessage = error instanceof Error ? error.message : '部分用户删除失败';
       toast({
         variant: 'destructive',
         title: '批量删除失败',
-        description: axiosError.response?.data?.detail || '部分用户删除失败',
+        description: errorMessage,
       });
     } finally {
       setIsSubmitting(false);

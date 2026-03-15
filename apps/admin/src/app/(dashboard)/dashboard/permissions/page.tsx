@@ -7,7 +7,6 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { AxiosError } from 'axios';
 import {
   Plus,
   Edit,
@@ -180,11 +179,11 @@ export default function PermissionsPage() {
       setIsCreateDialogOpen(false);
       loadPermissions();
     } catch (error) {
-      const axiosError = error as AxiosError<{ detail?: string }>;
+      const errorMessage = error instanceof Error ? error.message : '无法创建权限';
       toast({
         variant: 'destructive',
         title: '创建失败',
-        description: axiosError.response?.data?.detail || '无法创建权限',
+        description: errorMessage,
       });
     } finally {
       setIsSubmitting(false);
@@ -209,11 +208,11 @@ export default function PermissionsPage() {
       setIsEditDialogOpen(false);
       loadPermissions();
     } catch (error) {
-      const axiosError = error as AxiosError<{ detail?: string }>;
+      const errorMessage = error instanceof Error ? error.message : '无法更新权限';
       toast({
         variant: 'destructive',
         title: '更新失败',
-        description: axiosError.response?.data?.detail || '无法更新权限',
+        description: errorMessage,
       });
     } finally {
       setIsSubmitting(false);
@@ -234,11 +233,11 @@ export default function PermissionsPage() {
       setIsDeleteDialogOpen(false);
       loadPermissions();
     } catch (error) {
-      const axiosError = error as AxiosError<{ detail?: string }>;
+      const errorMessage = error instanceof Error ? error.message : '无法删除权限';
       toast({
         variant: 'destructive',
         title: '删除失败',
-        description: axiosError.response?.data?.detail || '无法删除权限',
+        description: errorMessage,
       });
     } finally {
       setIsSubmitting(false);

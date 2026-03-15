@@ -7,7 +7,6 @@
 'use client';
 
 import { useState } from 'react';
-import { AxiosError } from 'axios';
 import {
   User,
   Mail,
@@ -99,11 +98,11 @@ export default function ProfilePage() {
       });
       setIsEditing(false);
     } catch (error) {
-      const axiosError = error as AxiosError<{ detail?: string }>;
+      const errorMessage = error instanceof Error ? error.message : '无法更新个人信息';
       toast({
         variant: 'destructive',
         title: '保存失败',
-        description: axiosError.response?.data?.detail || '无法更新个人信息',
+        description: errorMessage,
       });
     } finally {
       setIsSubmitting(false);
@@ -150,11 +149,11 @@ export default function ProfilePage() {
       setIsPasswordDialogOpen(false);
       setPasswordData({ oldPassword: '', newPassword: '', confirmPassword: '' });
     } catch (error) {
-      const axiosError = error as AxiosError<{ detail?: string }>;
+      const errorMessage = error instanceof Error ? error.message : '原密码不正确或无法修改密码';
       toast({
         variant: 'destructive',
         title: '修改失败',
-        description: axiosError.response?.data?.detail || '原密码不正确或无法修改密码',
+        description: errorMessage,
       });
     } finally {
       setIsSubmitting(false);
