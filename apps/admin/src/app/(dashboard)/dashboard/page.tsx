@@ -140,10 +140,10 @@ export default function DashboardPage() {
       {/* 欢迎区域 */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
             {getGreeting()}，{user?.username || '管理员'}
           </h1>
-          <p className="text-slate-500 mt-1">
+          <p className="text-slate-500 dark:text-slate-400 mt-1">
             欢迎回到管理后台，这里是系统概览
           </p>
         </div>
@@ -168,20 +168,20 @@ export default function DashboardPage() {
               className="hover:shadow-md transition-shadow cursor-pointer"
             >
               <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium text-slate-600">
+                <CardTitle className="text-sm font-medium text-slate-600 dark:text-slate-400">
                   {card.title}
                 </CardTitle>
-                <Icon className="h-5 w-5 text-slate-400" />
+                <Icon className="h-5 w-5 text-slate-400 dark:text-slate-500" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-slate-900">
+                <div className="text-2xl font-bold text-slate-900 dark:text-slate-100">
                   {isLoading ? (
-                    <div className="h-8 w-16 bg-slate-200 animate-pulse rounded" />
+                    <div className="h-8 w-16 bg-slate-200 dark:bg-slate-700 animate-pulse rounded" />
                   ) : (
                     card.value
                   )}
                 </div>
-                <p className="text-xs text-slate-500 mt-1">{card.description}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{card.description}</p>
                 {card.href !== '#' && (
                   <Link
                     href={card.href}
@@ -233,7 +233,7 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-slate-600">系统状态</span>
+              <span className="text-sm text-slate-600 dark:text-slate-400">系统状态</span>
               <Badge
                 variant={healthy ? 'success' : 'destructive'}
               >
@@ -241,7 +241,7 @@ export default function DashboardPage() {
               </Badge>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-slate-600">数据库连接</span>
+              <span className="text-sm text-slate-600 dark:text-slate-400">数据库连接</span>
               <Badge
                 variant={dbConnected ? 'success' : 'destructive'}
               >
@@ -250,17 +250,17 @@ export default function DashboardPage() {
             </div>
             {healthStatuses.map((s) => (
               <div key={s.service} className="flex items-center justify-between">
-                <span className="text-sm text-slate-600">{s.service}</span>
+                <span className="text-sm text-slate-600 dark:text-slate-400">{s.service}</span>
                 <Badge variant={s.status === 'ok' ? 'success' : 'destructive'}>
                   {s.status === 'ok' ? '正常' : '异常'}
                 </Badge>
               </div>
             ))}
             <div className="flex items-center justify-between">
-              <span className="text-sm text-slate-600">当前登录</span>
+              <span className="text-sm text-slate-600 dark:text-slate-400">当前登录</span>
               <div className="flex items-center gap-2">
-                <Clock className="h-4 w-4 text-slate-400" />
-                <span className="text-sm font-medium">{user?.email}</span>
+                <Clock className="h-4 w-4 text-slate-400 dark:text-slate-500" />
+                <span className="text-sm font-medium dark:text-slate-300">{user?.email}</span>
               </div>
             </div>
           </CardContent>
