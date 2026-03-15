@@ -105,7 +105,7 @@ class UserListResponse(BaseModel):
 class AuditLogResponse(BaseModel):
     """审计日志响应"""
 
-    id: int = Field(description="日志ID")
+    id: int | None = Field(default=None, description="日志ID")
     user_id: str | None = Field(default=None, description="用户ID")
     action: str = Field(description="操作类型")
     resource: str = Field(description="资源类型")
@@ -114,7 +114,7 @@ class AuditLogResponse(BaseModel):
     user_agent: str | None = Field(default=None, description="用户代理")
     status: str = Field(description="状态")
     details: dict | None = Field(default=None, description="详情")
-    created_at: datetime = Field(description="创建时间")
+    created_at: datetime | None = Field(default=None, description="创建时间")
 
     model_config = ConfigDict(from_attributes=True)
 
