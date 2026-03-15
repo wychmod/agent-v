@@ -192,15 +192,15 @@ export default function AuditLogsPage() {
 
             {/* 操作类型筛选 */}
             <Select
-              value={filters.action}
-              onValueChange={(v) => setFilters({ ...filters, action: v as AuditAction })}
+              value={filters.action || 'all'}
+              onValueChange={(v) => setFilters({ ...filters, action: v === 'all' ? '' : (v as AuditAction) })}
             >
               <SelectTrigger className="w-[140px]">
                 <Filter className="h-4 w-4 mr-2" />
                 <SelectValue placeholder="操作类型" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">全部操作</SelectItem>
+                <SelectItem value="all">全部操作</SelectItem>
                 {Object.entries(ACTION_CONFIG).map(([key, config]) => (
                   <SelectItem key={key} value={key}>
                     {config.label}
@@ -211,15 +211,15 @@ export default function AuditLogsPage() {
 
             {/* 资源类型筛选 */}
             <Select
-              value={filters.resource}
-              onValueChange={(v) => setFilters({ ...filters, resource: v as AuditResource })}
+              value={filters.resource || 'all'}
+              onValueChange={(v) => setFilters({ ...filters, resource: v === 'all' ? '' : (v as AuditResource) })}
             >
               <SelectTrigger className="w-[140px]">
                 <FileText className="h-4 w-4 mr-2" />
                 <SelectValue placeholder="资源类型" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">全部资源</SelectItem>
+                <SelectItem value="all">全部资源</SelectItem>
                 {Object.entries(RESOURCE_CONFIG).map(([key, config]) => (
                   <SelectItem key={key} value={key}>
                     {config.label}
