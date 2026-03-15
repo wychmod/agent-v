@@ -9,7 +9,8 @@ from app.application.errors.exceptions import (
     NotFoundError,
 )
 from app.application.security.password_handler import PasswordHandler
-from app.domain.models.user import AuditLog, User, UserWithPassword
+from app.application.services.audit_logger import AuditLogger
+from app.domain.models.user import User, UserWithPassword
 from app.domain.repositories.audit_log_repository import AuditLogRepository
 from app.domain.repositories.role_repository import PermissionRepository, RoleRepository
 from app.domain.repositories.user_repository import UserRepository
@@ -75,17 +76,15 @@ class UserService:
 
         updated_user = await self._user_repo.update(user)
 
-        await self._audit_repo.create(
-            AuditLog(
-                user_id=current_user.id if current_user else user_id,
-                action="update_profile",
-                resource="user",
-                resource_id=user_id,
-                ip_address=ip_address,
-                user_agent=user_agent,
-                status="success",
-                details={"username": username} if username else None,
-            )
+        await AuditLogger.log_success(
+            audit_repo=self._audit_repo,
+            action="update_profile",
+            resource="user",
+            resource_id=user_id,
+            user_id=current_user.id if current_user else user_id,
+            ip_address=ip_address,
+            user_agent=user_agent,
+            details={"username": username} if username else None,
         )
 
         logger.info(f"更新用户资料成功: user_id={user_id}")
@@ -116,16 +115,14 @@ class UserService:
         password_hash = self._password_handler.hash_password(new_password)
         await self._user_repo.update_password(user_id, password_hash)
 
-        await self._audit_repo.create(
-            AuditLog(
-                user_id=user_id,
-                action="change_password",
-                resource="user",
-                resource_id=user_id,
-                ip_address=ip_address,
-                user_agent=user_agent,
-                status="success",
-            )
+        await AuditLogger.log_success(
+            audit_repo=self._audit_repo,
+            action="change_password",
+            resource="user",
+            resource_id=user_id,
+            user_id=user_id,
+            ip_address=ip_address,
+            user_agent=user_agent,
         )
 
         logger.info(f"修改密码成功: user_id={user_id}")
@@ -160,17 +157,15 @@ class UserService:
 
         result = await self._user_repo.delete(user_id)
 
-        await self._audit_repo.create(
-            AuditLog(
-                user_id=current_user.id,
-                action="delete_user",
-                resource="user",
-                resource_id=user_id,
-                ip_address=ip_address,
-                user_agent=user_agent,
-                status="success",
-                details={"deleted_user_email": user.email},
-            )
+        await AuditLogger.log_success(
+            audit_repo=self._audit_repo,
+            action="delete_user",
+            resource="user",
+            resource_id=user_id,
+            user_id=current_user.id,
+            ip_address=ip_address,
+            user_agent=user_agent,
+            details={"deleted_user_email": user.email},
         )
 
         logger.info(f"删除用户成功: user_id={user_id}, by={current_user.id}")
@@ -195,17 +190,15 @@ class UserService:
 
         await self._role_repo.assign_role_to_user(user_id, role.id, current_user.id)
 
-        await self._audit_repo.create(
-            AuditLog(
-                user_id=current_user.id,
-                action="assign_role",
-                resource="user",
-                resource_id=user_id,
-                ip_address=ip_address,
-                user_agent=user_agent,
-                status="success",
-                details={"role_name": role_name},
-            )
+        await AuditLogger.log_success(
+            audit_repo=self._audit_repo,
+            action="assign_role",
+            resource="user",
+            resource_id=user_id,
+            user_id=current_user.id,
+            ip_address=ip_address,
+            user_agent=user_agent,
+            details={"role_name": role_name},
         )
 
         logger.info(
@@ -231,17 +224,15 @@ class UserService:
 
         await self._role_repo.remove_role_from_user(user_id, role.id)
 
-        await self._audit_repo.create(
-            AuditLog(
-                user_id=current_user.id,
-                action="remove_role",
-                resource="user",
-                resource_id=user_id,
-                ip_address=ip_address,
-                user_agent=user_agent,
-                status="success",
-                details={"role_name": role_name},
-            )
+        await AuditLogger.log_success(
+            audit_repo=self._audit_repo,
+            action="remove_role",
+            resource="user",
+            resource_id=user_id,
+            user_id=current_user.id,
+            ip_address=ip_address,
+            user_agent=user_agent,
+            details={"role_name": role_name},
         )
 
         logger.info(
@@ -289,20 +280,18 @@ class UserService:
 
         await self._permission_repo.assign_permission_to_role(role_id, permission_id)
 
-        await self._audit_repo.create(
-            AuditLog(
-                user_id=current_user.id,
-                action="assign_permission",
-                resource="role",
-                resource_id=str(role_id),
-                ip_address=ip_address,
-                user_agent=user_agent,
-                status="success",
-                details={
-                    "role_name": role.name,
-                    "permission": f"{permission.resource}:{permission.action}",
-                },
-            )
+        await AuditLogger.log_success(
+            audit_repo=self._audit_repo,
+            action="assign_permission",
+            resource="role",
+            resource_id=str(role_id),
+            user_id=current_user.id,
+            ip_address=ip_address,
+            user_agent=user_agent,
+            details={
+                "role_name": role.name,
+                "permission": f"{permission.resource}:{permission.action}",
+            },
         )
 
         logger.info(
@@ -363,22 +352,20 @@ class UserService:
             )
 
         # 记录审计日志
-        await self._audit_repo.create(
-            AuditLog(
-                user_id=current_user.id if current_user else None,
-                action="admin_create_user",
-                resource="user",
-                resource_id=created_user.id,
-                ip_address=ip_address,
-                user_agent=user_agent,
-                status="success",
-                details={
-                    "email": email,
-                    "username": username,
-                    "is_active": is_active,
-                    "must_change_password": must_change_password,
-                },
-            )
+        await AuditLogger.log_success(
+            audit_repo=self._audit_repo,
+            action="admin_create_user",
+            resource="user",
+            resource_id=created_user.id,
+            user_id=current_user.id if current_user else None,
+            ip_address=ip_address,
+            user_agent=user_agent,
+            details={
+                "email": email,
+                "username": username,
+                "is_active": is_active,
+                "must_change_password": must_change_password,
+            },
         )
 
         logger.info(
@@ -387,7 +374,10 @@ class UserService:
         )
 
         # 重新获取用户以加载角色信息
-        return await self._user_repo.get_by_id(created_user.id)
+        result_user = await self._user_repo.get_by_id(created_user.id)
+        if result_user is None:
+            raise NotFoundError(resource="用户", identifier=created_user.id)
+        return result_user
 
     async def update_user_by_admin(
         self,
@@ -404,7 +394,7 @@ class UserService:
         if user is None:
             raise NotFoundError(resource="用户", identifier=user_id)
 
-        changes = {}
+        changes: dict[str, str | bool] = {}
 
         # 更新用户名
         if username is not None and username != user.username:
@@ -429,17 +419,15 @@ class UserService:
         updated_user = await self._user_repo.update(user)
 
         # 记录审计日志
-        await self._audit_repo.create(
-            AuditLog(
-                user_id=current_user.id if current_user else None,
-                action="admin_update_user",
-                resource="user",
-                resource_id=user_id,
-                ip_address=ip_address,
-                user_agent=user_agent,
-                status="success",
-                details=changes,
-            )
+        await AuditLogger.log_success(
+            audit_repo=self._audit_repo,
+            action="admin_update_user",
+            resource="user",
+            resource_id=user_id,
+            user_id=current_user.id if current_user else None,
+            ip_address=ip_address,
+            user_agent=user_agent,
+            details=changes,
         )
 
         logger.info(

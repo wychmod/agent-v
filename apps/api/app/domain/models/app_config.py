@@ -37,6 +37,27 @@ class LLMConfig(BaseModel):
         description="单次请求的最大输出token数，默认8192（deepseek-chat模型上限）",
     )
 
+    def to_response(self) -> "LLMConfigResponse":
+        """转换为响应模型（排除敏感信息）"""
+        return LLMConfigResponse(
+            base_url=self.base_url,
+            model_name=self.model_name,
+            temperature=self.temperature,
+            max_tokens=self.max_tokens,
+        )
+
+
+class LLMConfigResponse(BaseModel):
+    """LLM配置响应模型（不含敏感信息）.
+
+    用于API响应，排除api_key等敏感字段。
+    """
+
+    base_url: HttpUrl
+    model_name: str
+    temperature: float
+    max_tokens: int
+
 
 class AppConfig(BaseModel):
     """应用全局配置信息.

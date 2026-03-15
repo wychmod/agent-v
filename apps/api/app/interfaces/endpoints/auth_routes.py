@@ -124,9 +124,16 @@ async def logout(
 )
 async def refresh_token(
     data: RefreshTokenSchema,
+    request: Request,
     auth_service: Annotated[AuthService, Depends(get_auth_service)],
+    user_agent: Annotated[str | None, Depends(get_user_agent)],
 ) -> Response[TokenResponse]:
-    result = await auth_service.refresh_token(data.refresh_token)
+    ip_address = get_client_ip(request)
+    result = await auth_service.refresh_token(
+        refresh_token=data.refresh_token,
+        ip_address=ip_address,
+        user_agent=user_agent,
+    )
     return Response.success(
         message="令牌刷新成功",
         data=TokenResponse(

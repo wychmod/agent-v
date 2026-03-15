@@ -7,7 +7,8 @@ from app.application.errors.exceptions import (
     ConflictError,
     NotFoundError,
 )
-from app.domain.models.user import AuditLog, Permission, Role, User
+from app.application.services.audit_logger import AuditLogger
+from app.domain.models.user import Permission, Role, User
 from app.domain.repositories.audit_log_repository import AuditLogRepository
 from app.domain.repositories.role_repository import PermissionRepository, RoleRepository
 
@@ -53,17 +54,15 @@ class RoleService:
         )
         created_role = await self._role_repo.create(role)
 
-        await self._audit_repo.create(
-            AuditLog(
-                user_id=current_user.id,
-                action="create_role",
-                resource="role",
-                resource_id=str(created_role.id),
-                ip_address=ip_address,
-                user_agent=user_agent,
-                status="success",
-                details={"name": name, "display_name": display_name},
-            )
+        await AuditLogger.log_success(
+            audit_repo=self._audit_repo,
+            action="create_role",
+            resource="role",
+            resource_id=str(created_role.id),
+            user_id=current_user.id,
+            ip_address=ip_address,
+            user_agent=user_agent,
+            details={"name": name, "display_name": display_name},
         )
 
         logger.info(f"创建角色成功: name={name}, by={current_user.id}")
@@ -90,20 +89,18 @@ class RoleService:
 
         updated_role = await self._role_repo.update(role)
 
-        await self._audit_repo.create(
-            AuditLog(
-                user_id=current_user.id,
-                action="update_role",
-                resource="role",
-                resource_id=str(role_id),
-                ip_address=ip_address,
-                user_agent=user_agent,
-                status="success",
-                details={
-                    "display_name": display_name,
-                    "description": description,
-                },
-            )
+        await AuditLogger.log_success(
+            audit_repo=self._audit_repo,
+            action="update_role",
+            resource="role",
+            resource_id=str(role_id),
+            user_id=current_user.id,
+            ip_address=ip_address,
+            user_agent=user_agent,
+            details={
+                "display_name": display_name,
+                "description": description,
+            },
         )
 
         logger.info(f"更新角色成功: role_id={role_id}, by={current_user.id}")
@@ -132,17 +129,15 @@ class RoleService:
 
         result = await self._role_repo.delete(role_id)
 
-        await self._audit_repo.create(
-            AuditLog(
-                user_id=current_user.id,
-                action="delete_role",
-                resource="role",
-                resource_id=str(role_id),
-                ip_address=ip_address,
-                user_agent=user_agent,
-                status="success",
-                details={"role_name": role.name},
-            )
+        await AuditLogger.log_success(
+            audit_repo=self._audit_repo,
+            action="delete_role",
+            resource="role",
+            resource_id=str(role_id),
+            user_id=current_user.id,
+            ip_address=ip_address,
+            user_agent=user_agent,
+            details={"role_name": role.name},
         )
 
         logger.info(f"删除角色成功: role_id={role_id}, by={current_user.id}")
@@ -177,26 +172,22 @@ class RoleService:
         )
         created = await self._permission_repo.create(permission)
 
-        await self._audit_repo.create(
-            AuditLog(
-                user_id=current_user.id,
-                action="create_permission",
-                resource="permission",
-                resource_id=str(created.id),
-                ip_address=ip_address,
-                user_agent=user_agent,
-                status="success",
-                details={
-                    "resource": resource,
-                    "action": action,
-                    "display_name": display_name,
-                },
-            )
+        await AuditLogger.log_success(
+            audit_repo=self._audit_repo,
+            action="create_permission",
+            resource="permission",
+            resource_id=str(created.id),
+            user_id=current_user.id,
+            ip_address=ip_address,
+            user_agent=user_agent,
+            details={
+                "resource": resource,
+                "action": action,
+                "display_name": display_name,
+            },
         )
 
-        logger.info(
-            f"创建权限成功: {resource}:{action}, by={current_user.id}"
-        )
+        logger.info(f"创建权限成功: {resource}:{action}, by={current_user.id}")
         return created
 
     async def update_permission(
@@ -214,18 +205,18 @@ class RoleService:
 
         permission.display_name = display_name
         updated = await self._permission_repo.update(permission)
+        if updated is None:
+            raise NotFoundError(resource="权限", identifier=str(permission_id))
 
-        await self._audit_repo.create(
-            AuditLog(
-                user_id=current_user.id,
-                action="update_permission",
-                resource="permission",
-                resource_id=str(permission_id),
-                ip_address=ip_address,
-                user_agent=user_agent,
-                status="success",
-                details={"display_name": display_name},
-            )
+        await AuditLogger.log_success(
+            audit_repo=self._audit_repo,
+            action="update_permission",
+            resource="permission",
+            resource_id=str(permission_id),
+            user_id=current_user.id,
+            ip_address=ip_address,
+            user_agent=user_agent,
+            details={"display_name": display_name},
         )
 
         logger.info(
@@ -247,20 +238,18 @@ class RoleService:
 
         result = await self._permission_repo.delete(permission_id)
 
-        await self._audit_repo.create(
-            AuditLog(
-                user_id=current_user.id,
-                action="delete_permission",
-                resource="permission",
-                resource_id=str(permission_id),
-                ip_address=ip_address,
-                user_agent=user_agent,
-                status="success",
-                details={
-                    "resource": permission.resource,
-                    "action": permission.action,
-                },
-            )
+        await AuditLogger.log_success(
+            audit_repo=self._audit_repo,
+            action="delete_permission",
+            resource="permission",
+            resource_id=str(permission_id),
+            user_id=current_user.id,
+            ip_address=ip_address,
+            user_agent=user_agent,
+            details={
+                "resource": permission.resource,
+                "action": permission.action,
+            },
         )
 
         logger.info(
@@ -287,20 +276,18 @@ class RoleService:
 
         await self._permission_repo.remove_permission_from_role(role_id, permission_id)
 
-        await self._audit_repo.create(
-            AuditLog(
-                user_id=current_user.id,
-                action="remove_permission",
-                resource="role",
-                resource_id=str(role_id),
-                ip_address=ip_address,
-                user_agent=user_agent,
-                status="success",
-                details={
-                    "role_name": role.name,
-                    "permission": f"{permission.resource}:{permission.action}",
-                },
-            )
+        await AuditLogger.log_success(
+            audit_repo=self._audit_repo,
+            action="remove_permission",
+            resource="role",
+            resource_id=str(role_id),
+            user_id=current_user.id,
+            ip_address=ip_address,
+            user_agent=user_agent,
+            details={
+                "role_name": role.name,
+                "permission": f"{permission.resource}:{permission.action}",
+            },
         )
 
         logger.info(

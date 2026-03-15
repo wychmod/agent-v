@@ -13,9 +13,10 @@ from app.application.errors.exceptions import (
 from app.application.security.jwt_handler import JWTHandler
 from app.application.security.password_handler import PasswordHandler
 from app.application.security.rate_limiter import RateLimiter
+from app.application.services.audit_logger import AuditLogger
 from app.domain.external.email_sender import EmailSender
 from app.domain.external.session_manager import SessionManager
-from app.domain.models.user import AuditLog, SessionData, User, UserWithPassword
+from app.domain.models.user import SessionData, User, UserWithPassword
 from app.domain.repositories.audit_log_repository import AuditLogRepository
 from app.domain.repositories.role_repository import RoleRepository
 from app.domain.repositories.user_repository import UserRepository
@@ -126,17 +127,16 @@ class AuthService:
             verification_url=verification_url,
         )
 
-        await self._audit_repo.create(
-            AuditLog(
-                user_id=user.id,
-                action="register",
-                resource="user",
-                resource_id=user.id,
-                ip_address=ip_address,
-                user_agent=user_agent,
-                status="success",
-                details={"email": email, "username": username},
-            )
+        # 使用简化API记录审计日志
+        await AuditLogger.log_success(
+            audit_repo=self._audit_repo,
+            action="register",
+            resource="user",
+            resource_id=user.id,
+            user_id=user.id,
+            ip_address=ip_address,
+            user_agent=user_agent,
+            details={"email": email, "username": username},
         )
 
         logger.info(f"用户注册成功: id={user.id}, email={email}")
@@ -210,16 +210,15 @@ class AuthService:
 
         await self._user_repo.update_last_login(user.id)
 
-        await self._audit_repo.create(
-            AuditLog(
-                user_id=user.id,
-                action="login",
-                resource="user",
-                resource_id=user.id,
-                ip_address=ip_address,
-                user_agent=user_agent,
-                status="success",
-            )
+        # 使用简化API记录审计日志
+        await AuditLogger.log_success(
+            audit_repo=self._audit_repo,
+            action="login",
+            resource="user",
+            resource_id=user.id,
+            user_id=user.id,
+            ip_address=ip_address,
+            user_agent=user_agent,
         )
 
         logger.info(f"用户登录成功: id={user.id}, email={email}")
@@ -241,16 +240,14 @@ class AuthService:
         reason: str,
     ) -> None:
         """记录登录失败日志"""
-        await self._audit_repo.create(
-            AuditLog(
-                user_id=user_id,
-                action="login",
-                resource="user",
-                ip_address=ip_address,
-                user_agent=user_agent,
-                status="failed",
-                details={"email": email, "reason": reason},
-            )
+        await AuditLogger.log_failure(
+            audit_repo=self._audit_repo,
+            action="login",
+            resource="user",
+            user_id=user_id,
+            ip_address=ip_address,
+            user_agent=user_agent,
+            details={"email": email, "reason": reason},
         )
 
     async def logout(
@@ -301,23 +298,35 @@ class AuthService:
                     # refresh_token 解析失败不影响登出流程
                     pass
 
-            await self._audit_repo.create(
-                AuditLog(
-                    user_id=user_id,
-                    action="logout",
-                    resource="user",
-                    resource_id=user_id,
-                    ip_address=ip_address,
-                    user_agent=user_agent,
-                    status="success",
-                )
+            await AuditLogger.log_success(
+                audit_repo=self._audit_repo,
+                action="logout",
+                resource="user",
+                resource_id=user_id,
+                user_id=user_id,
+                ip_address=ip_address,
+                user_agent=user_agent,
             )
 
             logger.info(f"用户登出成功: user_id={user_id}")
         except Exception as e:
+            # 记录登出失败的审计日志
+            await AuditLogger.log_failure(
+                audit_repo=self._audit_repo,
+                action="logout",
+                resource="user",
+                ip_address=ip_address,
+                user_agent=user_agent,
+                details={"error": str(e)},
+            )
             logger.warning(f"登出处理失败: {e}")
 
-    async def refresh_token(self, refresh_token: str) -> dict:
+    async def refresh_token(
+        self,
+        refresh_token: str,
+        ip_address: str | None = None,
+        user_agent: str | None = None,
+    ) -> dict:
         """刷新访问令牌
 
         流程:
@@ -326,22 +335,58 @@ class AuthService:
         3. 验证用户状态和存在性
         4. 创建新会话
         5. 生成新的访问令牌
+        6. 记录审计日志
         """
         payload = self._jwt_handler.decode_refresh_token(refresh_token)
         user_id = payload.get("user_id")
         jti = payload.get("jti")
 
         if not isinstance(user_id, str):
+            await AuditLogger.log_failure(
+                audit_repo=self._audit_repo,
+                action="refresh_token",
+                resource="user",
+                ip_address=ip_address,
+                user_agent=user_agent,
+                details={"reason": "无效的令牌"},
+            )
             raise UnauthorizedError("无效的令牌")
 
         if jti and await self._session_manager.is_blacklisted(jti):
+            await AuditLogger.log_failure(
+                audit_repo=self._audit_repo,
+                action="refresh_token",
+                resource="user",
+                user_id=user_id,
+                ip_address=ip_address,
+                user_agent=user_agent,
+                details={"reason": "刷新令牌已失效"},
+            )
             raise UnauthorizedError("刷新令牌已失效")
 
         user = await self._user_repo.get_by_id(user_id)
         if user is None:
+            await AuditLogger.log_failure(
+                audit_repo=self._audit_repo,
+                action="refresh_token",
+                resource="user",
+                user_id=user_id,
+                ip_address=ip_address,
+                user_agent=user_agent,
+                details={"reason": "用户不存在"},
+            )
             raise UnauthorizedError("用户不存在")
 
         if not user.is_active:
+            await AuditLogger.log_failure(
+                audit_repo=self._audit_repo,
+                action="refresh_token",
+                resource="user",
+                user_id=user_id,
+                ip_address=ip_address,
+                user_agent=user_agent,
+                details={"reason": "账户已被禁用"},
+            )
             raise ForbiddenError(
                 resource="用户", action="刷新令牌", message="账户已被禁用"
             )
@@ -350,8 +395,8 @@ class AuthService:
             user_id=user.id,
             roles=[role.name for role in user.roles],
             permissions=user.get_all_permissions(),
-            ip_address=None,
-            user_agent=None,
+            ip_address=ip_address,
+            user_agent=user_agent,
             login_at=datetime.now(UTC),
         )
         session_id = await self._session_manager.create_session(
@@ -359,6 +404,17 @@ class AuthService:
         )
 
         access_token = self._jwt_handler.create_access_token(user.id, session_id)
+
+        # 记录成功的审计日志
+        await AuditLogger.log_success(
+            audit_repo=self._audit_repo,
+            action="refresh_token",
+            resource="user",
+            resource_id=user_id,
+            user_id=user_id,
+            ip_address=ip_address,
+            user_agent=user_agent,
+        )
 
         logger.info(f"刷新令牌成功: user_id={user_id}")
 
@@ -404,16 +460,14 @@ class AuthService:
             username=user.username,
         )
 
-        await self._audit_repo.create(
-            AuditLog(
-                user_id=user_id,
-                action="verify_email",
-                resource="user",
-                resource_id=user_id,
-                ip_address=ip_address,
-                user_agent=user_agent,
-                status="success",
-            )
+        await AuditLogger.log_success(
+            audit_repo=self._audit_repo,
+            action="verify_email",
+            resource="user",
+            resource_id=user_id,
+            user_id=user_id,
+            ip_address=ip_address,
+            user_agent=user_agent,
         )
 
         logger.info(f"邮箱验证成功: user_id={user_id}")
@@ -441,16 +495,14 @@ class AuthService:
             reset_url=reset_url,
         )
 
-        await self._audit_repo.create(
-            AuditLog(
-                user_id=user.id,
-                action="request_password_reset",
-                resource="user",
-                resource_id=user.id,
-                ip_address=ip_address,
-                user_agent=user_agent,
-                status="success",
-            )
+        await AuditLogger.log_success(
+            audit_repo=self._audit_repo,
+            action="request_password_reset",
+            resource="user",
+            resource_id=user.id,
+            user_id=user.id,
+            ip_address=ip_address,
+            user_agent=user_agent,
         )
 
         logger.info(f"密码重置请求成功: user_id={user.id}")
@@ -488,16 +540,14 @@ class AuthService:
 
         await self._session_manager.delete_user_sessions(user_id)
 
-        await self._audit_repo.create(
-            AuditLog(
-                user_id=user_id,
-                action="reset_password",
-                resource="user",
-                resource_id=user_id,
-                ip_address=ip_address,
-                user_agent=user_agent,
-                status="success",
-            )
+        await AuditLogger.log_success(
+            audit_repo=self._audit_repo,
+            action="reset_password",
+            resource="user",
+            resource_id=user_id,
+            user_id=user_id,
+            ip_address=ip_address,
+            user_agent=user_agent,
         )
 
         logger.info(f"密码重置成功: user_id={user_id}")
