@@ -19,6 +19,7 @@
 
 import logging
 import uuid
+from datetime import datetime
 
 from app.application.errors.exceptions import (
     ConflictError,
@@ -542,8 +543,6 @@ class UserService:
 
         # 生成密码哈希
         password_hash = self._password_handler.hash_password(password)
-
-        from datetime import datetime
 
         # 创建用户
         user = UserWithPassword(

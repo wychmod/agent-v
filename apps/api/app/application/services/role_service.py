@@ -16,6 +16,7 @@
 """
 
 import logging
+from datetime import datetime
 
 from app.application.errors.exceptions import (
     BadRequestError,
@@ -94,8 +95,6 @@ class RoleService:
         """
         if await self._role_repo.exists_by_name(name):
             raise ConflictError(resource="角色", reason="角色名已存在")
-
-        from datetime import datetime
 
         role = Role(
             id=0,
@@ -271,8 +270,6 @@ class RoleService:
         existing = await self._permission_repo.get_by_resource_action(resource, action)
         if existing is not None:
             raise ConflictError(resource="权限", reason=f"{resource}:{action} 已存在")
-
-        from datetime import datetime
 
         permission = Permission(
             id=0,
