@@ -62,7 +62,7 @@ class Task(Protocol):
         """运行当前任务"""
         ...
 
-    def cancel(self) -> bool:
+    async def cancel(self) -> bool:
         """取消当前任务
 
         Returns:
@@ -103,7 +103,7 @@ class Task(Protocol):
         ...
 
     @classmethod
-    def create(cls, task_runner: TaskRunner) -> "Task":
+    async def create(cls, task_runner: TaskRunner) -> "Task":
         """创建新任务
 
         Args:
