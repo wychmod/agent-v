@@ -1,4 +1,21 @@
-"""用户管理系统领域模型"""
+"""用户管理系统领域模型模块
+
+本模块定义用户管理系统的核心领域模型。
+
+主要模型:
+- Permission: 权限模型，定义资源和操作
+- Role: 角色模型，包含权限集合
+- User: 用户模型，包含角色和基本信息
+- UserWithPassword: 带密码的用户模型（内部使用）
+- AuditLog: 审计日志模型
+- TokenPayload: JWT令牌载荷模型
+- SessionData: 会话数据模型
+
+领域规则:
+- 用户通过角色间接获取权限
+- 权限采用 resource:action 格式标识
+- 用户可拥有多个角色
+"""
 
 from datetime import datetime
 

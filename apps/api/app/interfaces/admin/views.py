@@ -1,4 +1,22 @@
-"""管理后台 ModelView 定义"""
+"""管理后台 ModelView 定义模块
+
+本模块定义 starlette-admin 管理后台的所有模型视图。
+
+视图类列表:
+- UserView: 用户管理视图
+- RoleView: 角色管理视图
+- PermissionView: 权限管理视图
+- UserRoleView: 用户-角色关联视图
+- RolePermissionView: 角色-权限关联视图
+- AuditLogView: 审计日志视图（只读）
+
+视图配置说明:
+- exclude_fields_from_*: 从特定操作中排除的字段
+- searchable_fields: 可搜索的字段列表
+- sortable_fields: 可排序的字段列表
+- column_labels: 字段显示名称映射
+- page_size: 默认每页显示数量
+"""
 
 from starlette_admin.contrib.sqla import ModelView
 
@@ -13,12 +31,16 @@ from app.infrastructure.models.user_models import (
 
 
 class UserView(ModelView):
-    """用户管理视图"""
+    """用户管理视图
+
+    提供用户的增删改查功能，隐藏敏感字段（如密码哈希）。
+    """
 
     name = "用户"
     label = "用户管理"
     icon = "fa fa-users"
 
+    # 列表页排除字段
     exclude_fields_from_list = [
         "password_hash",
         "must_change_password",
@@ -26,9 +48,11 @@ class UserView(ModelView):
         "roles",
         "audit_logs",
     ]
+    # 详情页排除字段
     exclude_fields_from_detail = [
         "password_hash",
     ]
+    # 创建表单排除字段
     exclude_fields_from_create = [
         "id",
         "password_hash",
@@ -38,6 +62,7 @@ class UserView(ModelView):
         "roles",
         "audit_logs",
     ]
+    # 编辑表单排除字段
     exclude_fields_from_edit = [
         "id",
         "password_hash",
@@ -54,11 +79,12 @@ class UserView(ModelView):
         "username",
         "is_active",
     ]
-    fields_default_sort = [("created_at", True)]
+    fields_default_sort = [("created_at", True)]  # 按创建时间降序
     page_size = 20
     page_size_options = [10, 20, 50, 100]
-    export_types = []
+    export_types = []  # 禁用导出功能
 
+    # 字段显示名称
     column_labels = {
         UserModel.id: "用户ID",
         UserModel.email: "邮箱",
@@ -74,7 +100,10 @@ class UserView(ModelView):
 
 
 class RoleView(ModelView):
-    """角色管理视图"""
+    """角色管理视图
+
+    提供角色的增删改查功能。
+    """
 
     name = "角色"
     label = "角色管理"
@@ -111,7 +140,10 @@ class RoleView(ModelView):
 
 
 class PermissionView(ModelView):
-    """权限管理视图"""
+    """权限管理视图
+
+    提供权限的增删改查功能。
+    """
 
     name = "权限"
     label = "权限管理"
@@ -153,7 +185,10 @@ class PermissionView(ModelView):
 
 
 class UserRoleView(ModelView):
-    """用户-角色关联视图"""
+    """用户-角色关联视图
+
+    管理用户与角色的多对多关系。
+    """
 
     name = "用户角色"
     label = "用户-角色关联"
@@ -183,7 +218,10 @@ class UserRoleView(ModelView):
 
 
 class RolePermissionView(ModelView):
-    """角色-权限关联视图"""
+    """角色-权限关联视图
+
+    管理角色与权限的多对多关系。
+    """
 
     name = "角色权限"
     label = "角色-权限关联"
@@ -212,19 +250,26 @@ class RolePermissionView(ModelView):
 
 
 class AuditLogView(ModelView):
-    """审计日志视图（只读）"""
+    """审计日志视图
+
+    只读视图，用于查看系统操作日志。
+    禁用创建、编辑、删除操作以保证日志完整性。
+    """
 
     name = "审计日志"
     label = "审计日志"
     icon = "fa fa-clipboard-list"
 
     def can_create(self, request) -> bool:
+        """禁止创建"""
         return False
 
     def can_edit(self, request) -> bool:
+        """禁止编辑"""
         return False
 
     def can_delete(self, request) -> bool:
+        """禁止删除"""
         return False
 
     exclude_fields_from_list = [

@@ -1,4 +1,13 @@
-"""MySQL 审计日志仓储实现"""
+"""MySQL审计日志仓储实现模块
+
+本模块实现基于MySQL数据库的审计日志持久化。
+
+使用SQLAlchemy ORM进行数据库操作，支持:
+- 审计日志的创建
+- 用户日志查询和分页
+- 系统日志多条件过滤查询
+- 日志统计功能
+"""
 
 import logging
 from datetime import datetime
@@ -14,13 +23,31 @@ logger = logging.getLogger(__name__)
 
 
 class MySQLAuditLogRepository(AuditLogRepository):
-    """MySQL 审计日志仓储实现"""
+    """MySQL审计日志仓储实现
+
+    将审计日志持久化到MySQL数据库中。
+
+    Attributes:
+        _session: SQLAlchemy异步会话
+    """
 
     def __init__(self, session: AsyncSession) -> None:
+        """初始化审计日志仓储
+
+        Args:
+            session: SQLAlchemy异步会话实例
+        """
         self._session = session
 
     def _model_to_audit_log(self, model: AuditLogModel) -> AuditLog:
-        """将 ORM 模型转换为领域模型"""
+        """将ORM模型转换为领域模型
+
+        Args:
+            model: 审计日志ORM模型
+
+        Returns:
+            审计日志领域模型
+        """
         return AuditLog(
             id=model.id,
             user_id=model.user_id,

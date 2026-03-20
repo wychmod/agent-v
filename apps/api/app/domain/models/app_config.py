@@ -1,3 +1,17 @@
+"""应用配置领域模型模块
+
+本模块定义应用程序的配置领域模型，用于管理应用级别的配置信息。
+
+主要模型:
+- LLMConfig: 大语言模型配置
+- LLMConfigResponse: LLM配置响应模型（脱敏）
+- AppConfig: 应用全局配置容器
+
+配置层级:
+应用配置采用分层设计，顶层AppConfig聚合各子模块配置，
+便于统一管理和扩展。
+"""
+
 from pydantic import BaseModel, ConfigDict, Field, HttpUrl
 
 

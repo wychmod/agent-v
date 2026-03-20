@@ -1,4 +1,24 @@
-"""SMTP 邮件发送实现"""
+"""SMTP 邮件发送服务实现模块
+
+本模块提供基于 SMTP 协议的邮件发送功能实现，支持多种邮件类型。
+
+主要功能:
+- 通用邮件发送（支持 HTML 和纯文本格式）
+- 邮箱验证邮件发送
+- 密码重置邮件发送
+- 欢迎邮件发送
+
+技术特点:
+- 使用 aiosmtplib 实现异步发送
+- 支持 TLS 加密传输
+- 内置美观的 HTML 邮件模板
+- 完善的错误处理和日志记录
+
+依赖配置:
+- SMTP 服务器地址和端口
+- SMTP 认证凭据
+- 发件人信息
+"""
 
 import logging
 from email.mime.multipart import MIMEMultipart
@@ -13,9 +33,21 @@ logger = logging.getLogger(__name__)
 
 
 class SMTPEmailSender(EmailSender):
-    """基于 SMTP 的邮件发送实现"""
+    """基于 SMTP 协议的邮件发送服务实现
+
+    实现 EmailSender 接口，提供完整的邮件发送功能。
+    支持异步发送，内置多种预定义邮件模板。
+
+    Attributes:
+        _settings: 应用配置对象，包含 SMTP 服务器配置信息
+    """
 
     def __init__(self, settings: Settings | None = None) -> None:
+        """初始化 SMTP 邮件发送器
+
+        Args:
+            settings: 可选的配置对象，未提供时使用全局配置
+        """
         self._settings = settings or get_settings()
 
     async def _send(
@@ -25,7 +57,23 @@ class SMTPEmailSender(EmailSender):
         body: str,
         html: bool = True,
     ) -> bool:
-        """内部发送邮件方法"""
+        """内部邮件发送方法
+
+        流程:
+        1. 构建 MIME 邮件消息（设置发件人、收件人、主题）
+        2. 根据 html 参数选择邮件格式（HTML 或纯文本）
+        3. 通过 aiosmtplib 异步发送邮件
+        4. 记录发送结果日志
+
+        Args:
+            to: 收件人邮箱地址
+            subject: 邮件主题
+            body: 邮件正文内容
+            html: 是否为 HTML 格式，默认为 True
+
+        Returns:
+            bool: 发送成功返回 True，失败返回 False
+        """
         try:
             message = MIMEMultipart("alternative")
             message["From"] = (
@@ -62,7 +110,19 @@ class SMTPEmailSender(EmailSender):
         body: str,
         html: bool = True,
     ) -> bool:
-        """发送邮件"""
+        """发送通用邮件
+
+        提供通用的邮件发送功能，支持自定义主题和内容。
+
+        Args:
+            to: 收件人邮箱地址
+            subject: 邮件主题
+            body: 邮件正文内容
+            html: 是否为 HTML 格式，默认为 True
+
+        Returns:
+            bool: 发送成功返回 True，失败返回 False
+        """
         return await self._send(to, subject, body, html)
 
     async def send_verification_email(
@@ -71,7 +131,21 @@ class SMTPEmailSender(EmailSender):
         username: str,
         verification_url: str,
     ) -> bool:
-        """发送邮箱验证邮件"""
+        """发送邮箱验证邮件
+
+        流程:
+        1. 设置邮件主题为"验证您的邮箱地址"
+        2. 使用验证邮件模板生成 HTML 内容
+        3. 调用内部发送方法完成发送
+
+        Args:
+            to: 收件人邮箱地址
+            username: 用户名，用于邮件内容个性化
+            verification_url: 验证链接 URL（15分钟有效）
+
+        Returns:
+            bool: 发送成功返回 True，失败返回 False
+        """
         subject = "验证您的邮箱地址"
         body = self._get_verification_email_template(username, verification_url)
         return await self._send(to, subject, body, html=True)
@@ -82,7 +156,21 @@ class SMTPEmailSender(EmailSender):
         username: str,
         reset_url: str,
     ) -> bool:
-        """发送密码重置邮件"""
+        """发送密码重置邮件
+
+        流程:
+        1. 设置邮件主题为"重置您的密码"
+        2. 使用密码重置邮件模板生成 HTML 内容
+        3. 调用内部发送方法完成发送
+
+        Args:
+            to: 收件人邮箱地址
+            username: 用户名，用于邮件内容个性化
+            reset_url: 密码重置链接 URL（15分钟有效）
+
+        Returns:
+            bool: 发送成功返回 True，失败返回 False
+        """
         subject = "重置您的密码"
         body = self._get_password_reset_email_template(username, reset_url)
         return await self._send(to, subject, body, html=True)
@@ -92,14 +180,38 @@ class SMTPEmailSender(EmailSender):
         to: str,
         username: str,
     ) -> bool:
-        """发送欢迎邮件"""
+        """发送欢迎邮件
+
+        在用户账户成功验证后发送欢迎邮件。
+
+        Args:
+            to: 收件人邮箱地址
+            username: 用户名，用于邮件内容个性化
+
+        Returns:
+            bool: 发送成功返回 True，失败返回 False
+        """
         subject = "欢迎加入我们"
         body = self._get_welcome_email_template(username)
         return await self._send(to, subject, body, html=True)
 
     @staticmethod
     def _get_verification_email_template(username: str, verification_url: str) -> str:
-        """邮箱验证邮件模板"""
+        """生成邮箱验证邮件的 HTML 模板
+
+        模板特点:
+        - 蓝色主题头部
+        - 清晰的验证按钮
+        - 备用链接文本
+        - 有效期提示
+
+        Args:
+            username: 用户名
+            verification_url: 验证链接 URL
+
+        Returns:
+            str: 完整的 HTML 邮件内容
+        """
         return f"""
 <!DOCTYPE html>
 <html>
@@ -140,7 +252,21 @@ class SMTPEmailSender(EmailSender):
 
     @staticmethod
     def _get_password_reset_email_template(username: str, reset_url: str) -> str:
-        """密码重置邮件模板"""
+        """生成密码重置邮件的 HTML 模板
+
+        模板特点:
+        - 红色警示主题头部
+        - 明显的重置按钮
+        - 安全提示警告框
+        - 备用链接文本
+
+        Args:
+            username: 用户名
+            reset_url: 密码重置链接 URL
+
+        Returns:
+            str: 完整的 HTML 邮件内容
+        """
         return f"""
 <!DOCTYPE html>
 <html>
@@ -184,7 +310,19 @@ class SMTPEmailSender(EmailSender):
 
     @staticmethod
     def _get_welcome_email_template(username: str) -> str:
-        """欢迎邮件模板"""
+        """生成欢迎邮件的 HTML 模板
+
+        模板特点:
+        - 绿色成功主题头部
+        - 账户激活确认信息
+        - 简洁友好的欢迎语
+
+        Args:
+            username: 用户名
+
+        Returns:
+            str: 完整的 HTML 邮件内容
+        """
         return f"""
 <!DOCTYPE html>
 <html>

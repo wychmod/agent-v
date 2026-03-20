@@ -1,4 +1,26 @@
-"""认证相关 Pydantic Schema"""
+"""认证相关 Pydantic Schema 模块
+
+本模块定义认证 API 的请求和响应数据模型。
+
+主要数据模型:
+- UserRegisterSchema: 用户注册请求
+- LoginSchema: 用户登录请求
+- LogoutSchema: 用户登出请求
+- RefreshTokenSchema: Token 刷新请求
+- VerifyEmailSchema: 邮箱验证请求
+- ResetPasswordRequestSchema: 密码重置请求
+- ResetPasswordSchema: 执行密码重置请求
+- ChangePasswordSchema: 修改密码请求
+- TokenResponse: Token 响应
+- LoginResponse: 登录响应（含用户信息）
+- UserResponse: 用户基本信息响应
+
+验证规则:
+- 用户名: 3-20 字符，仅允许字母、数字和下划线
+- 密码: 8-128 字符
+- 邮箱: 标准邮箱格式
+- 密码确认: 必须与密码一致
+"""
 
 import re
 from datetime import datetime
@@ -7,7 +29,10 @@ from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
 
 class UserRegisterSchema(BaseModel):
-    """用户注册请求"""
+    """用户注册请求模型
+
+    包含注册所需的全部字段和验证规则。
+    """
 
     email: EmailStr = Field(description="邮箱地址")
     username: str = Field(
@@ -21,6 +46,7 @@ class UserRegisterSchema(BaseModel):
     @field_validator("username")
     @classmethod
     def validate_username(cls, v: str) -> str:
+        """验证用户名格式"""
         if not re.match(r"^[a-zA-Z0-9_]+$", v):
             raise ValueError("用户名只能包含字母、数字和下划线")
         return v
@@ -28,20 +54,24 @@ class UserRegisterSchema(BaseModel):
     @field_validator("password_confirm")
     @classmethod
     def validate_password_confirm(cls, v: str, info) -> str:
+        """验证两次密码输入是否一致"""
         if "password" in info.data and v != info.data["password"]:
             raise ValueError("两次输入的密码不一致")
         return v
 
 
 class LoginSchema(BaseModel):
-    """用户登录请求"""
+    """用户登录请求模型"""
 
     email: EmailStr = Field(description="邮箱地址")
     password: str = Field(description="密码")
 
 
 class TokenResponse(BaseModel):
-    """Token 响应"""
+    """Token 响应模型
+
+    用于返回访问令牌和刷新令牌。
+    """
 
     access_token: str = Field(description="访问令牌")
     refresh_token: str | None = Field(default=None, description="刷新令牌")

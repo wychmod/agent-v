@@ -1,4 +1,27 @@
-"""认证 API 路由"""
+"""认证 API 路由模块
+
+本模块提供用户认证相关的 API 端点，包含完整的认证生命周期管理。
+
+主要功能:
+- 用户注册与邮箱验证
+- 用户登录与登出
+- Token 刷新机制
+- 密码重置流程
+
+API 端点:
+- POST /auth/register: 用户注册
+- POST /auth/login: 用户登录
+- POST /auth/logout: 用户登出
+- POST /auth/refresh: 刷新访问令牌
+- POST /auth/verify-email: 验证邮箱
+- POST /auth/reset-password-request: 请求密码重置
+- POST /auth/reset-password: 执行密码重置
+
+安全特性:
+- 所有敏感操作记录审计日志
+- 支持客户端 IP 和 User-Agent 追踪
+- Token 黑名单机制防止重放攻击
+"""
 
 import logging
 from typing import Annotated

@@ -1,3 +1,23 @@
+"""API 基础响应模型模块
+
+本模块定义 API 的标准响应格式，提供统一的响应结构。
+
+主要数据模型:
+- Response[T]: 泛型通用响应模型
+
+响应格式约定:
+- code: HTTP 状态码，200 表示成功
+- message: 响应消息描述
+- data: 响应数据载荷
+
+使用示例:
+    # 成功响应
+    Response.success(data=user, message="获取成功")
+
+    # 失败响应
+    Response.fail(code=404, message="用户不存在")
+"""
+
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict

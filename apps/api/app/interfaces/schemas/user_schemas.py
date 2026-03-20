@@ -1,4 +1,21 @@
-"""用户管理相关 Pydantic Schema"""
+"""用户管理相关 Pydantic Schema 模块
+
+本模块定义用户管理 API 的请求和响应数据模型。
+
+主要数据模型:
+请求模型:
+- UpdateProfileSchema: 更新用户资料请求
+- AssignRoleSchema: 分配角色请求
+- AssignPermissionSchema: 分配权限请求
+
+响应模型:
+- RoleResponse: 角色信息响应
+- PermissionResponse: 权限信息响应
+- UserDetailResponse: 用户详情响应
+- UserListResponse: 用户列表响应
+- AuditLogResponse: 审计日志响应
+- AuditLogListResponse: 审计日志列表响应
+"""
 
 from datetime import datetime
 
@@ -6,7 +23,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 
 class UpdateProfileSchema(BaseModel):
-    """更新用户资料请求"""
+    """更新用户资料请求模型"""
 
     username: str | None = Field(
         default=None,
@@ -17,19 +34,19 @@ class UpdateProfileSchema(BaseModel):
 
 
 class AssignRoleSchema(BaseModel):
-    """分配角色请求"""
+    """分配角色请求模型"""
 
     role_name: str = Field(description="角色名称")
 
 
 class AssignPermissionSchema(BaseModel):
-    """分配权限请求"""
+    """分配权限请求模型"""
 
     permission_id: int = Field(description="权限ID")
 
 
 class RoleResponse(BaseModel):
-    """角色响应"""
+    """角色信息响应模型"""
 
     id: int = Field(description="角色ID")
     name: str = Field(description="角色名称")
@@ -41,7 +58,7 @@ class RoleResponse(BaseModel):
 
 
 class PermissionResponse(BaseModel):
-    """权限响应"""
+    """权限信息响应模型"""
 
     id: int = Field(description="权限ID")
     resource: str = Field(description="资源名称")
@@ -53,7 +70,10 @@ class PermissionResponse(BaseModel):
 
 
 class UserDetailResponse(BaseModel):
-    """用户详情响应"""
+    """用户详情响应模型
+
+    包含用户的完整信息，包括关联的角色列表。
+    """
 
     id: str = Field(description="用户ID")
     email: str = Field(description="邮箱")
@@ -70,6 +90,14 @@ class UserDetailResponse(BaseModel):
 
     @classmethod
     def from_user(cls, user) -> "UserDetailResponse":
+        """从用户领域模型创建响应对象
+
+        Args:
+            user: 用户领域模型对象
+
+        Returns:
+            UserDetailResponse: 用户详情响应对象
+        """
         return cls(
             id=user.id,
             email=user.email,
@@ -94,7 +122,7 @@ class UserDetailResponse(BaseModel):
 
 
 class UserListResponse(BaseModel):
-    """用户列表响应"""
+    """用户列表响应模型（分页）"""
 
     items: list[UserDetailResponse] = Field(description="用户列表")
     total: int = Field(description="总数")
@@ -103,7 +131,7 @@ class UserListResponse(BaseModel):
 
 
 class AuditLogResponse(BaseModel):
-    """审计日志响应"""
+    """审计日志响应模型"""
 
     id: int | None = Field(default=None, description="日志ID")
     user_id: str | None = Field(default=None, description="用户ID")
@@ -120,7 +148,7 @@ class AuditLogResponse(BaseModel):
 
 
 class AuditLogListResponse(BaseModel):
-    """审计日志列表响应"""
+    """审计日志列表响应模型（分页）"""
 
     items: list[AuditLogResponse] = Field(description="日志列表")
     total: int = Field(description="总数")

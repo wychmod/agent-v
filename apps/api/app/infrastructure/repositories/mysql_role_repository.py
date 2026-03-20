@@ -1,4 +1,13 @@
-"""MySQL 角色和权限仓储实现"""
+"""MySQL角色和权限仓储实现模块
+
+本模块实现基于MySQL数据库的角色和权限持久化。
+
+包含两个仓储实现:
+- MySQLRoleRepository: 角色仓储
+- MySQLPermissionRepository: 权限仓储
+
+使用SQLAlchemy ORM进行数据库操作，支持完整的RBAC功能。
+"""
 
 import logging
 from typing import cast
@@ -22,15 +31,35 @@ logger = logging.getLogger(__name__)
 
 
 class MySQLRoleRepository(RoleRepository):
-    """MySQL 角色仓储实现"""
+    """MySQL角色仓储实现
+
+    将角色数据持久化到MySQL数据库中。
+    支持角色CRUD和用户角色关联管理。
+
+    Attributes:
+        _session: SQLAlchemy异步会话
+    """
 
     def __init__(self, session: AsyncSession) -> None:
+        """初始化角色仓储
+
+        Args:
+            session: SQLAlchemy异步会话实例
+        """
         self._session = session
 
     def _model_to_role(
         self, model: RoleModel, include_permissions: bool = True
     ) -> Role:
-        """将 ORM 模型转换为领域模型"""
+        """将ORM模型转换为领域模型
+
+        Args:
+            model: 角色ORM模型
+            include_permissions: 是否包含权限信息
+
+        Returns:
+            角色领域模型
+        """
         permissions = []
         if include_permissions:
             for role_perm in model.permissions:

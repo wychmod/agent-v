@@ -1,3 +1,32 @@
+"""应用异常定义模块
+
+本模块定义了应用程序中使用的所有自定义异常类，遵循HTTP状态码规范。
+
+异常层级结构:
+- AppException: 所有应用异常的基类
+  - ClientError (4xx): 客户端错误
+    - BadRequestError (400): 请求参数错误
+    - UnauthorizedError (401): 未认证错误
+    - ForbiddenError (403): 禁止访问错误
+    - NotFoundError (404): 资源未找到错误
+    - ConflictError (409): 资源冲突错误
+    - UnprocessableError (422): 无法处理的实体错误
+    - ValidationError (422): 数据校验错误
+    - TooManyRequestsError (429): 请求过多错误
+  - ServerError (5xx): 服务端错误
+    - ServerInternalError (500): 服务器内部错误
+    - ServiceUnavailableError (503): 服务不可用错误
+
+使用示例:
+    from app.application.errors.exceptions import NotFoundError, UnauthorizedError
+
+    # 抛出资源未找到异常
+    raise NotFoundError(resource="用户", identifier="user_123")
+
+    # 抛出认证失败异常
+    raise UnauthorizedError("Token已过期")
+"""
+
 from typing import Any
 
 

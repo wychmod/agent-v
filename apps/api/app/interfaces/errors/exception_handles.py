@@ -1,3 +1,30 @@
+"""全局异常处理模块
+
+本模块提供 FastAPI 应用的统一异常处理机制。
+
+主要功能:
+- 捕获并处理应用层自定义异常 (AppException)
+- 捕获并处理 FastAPI 框架异常 (HTTPException)
+- 捕获并处理未预期的运行时异常 (Exception)
+
+异常处理优先级:
+1. AppException - 业务逻辑异常
+2. HTTPException - 框架级 HTTP 异常
+3. Exception - 兜底处理器
+
+响应格式:
+所有异常响应统一使用 Response 模型：
+{
+    "code": <状态码>,
+    "message": "<错误消息>",
+    "data": {}
+}
+
+安全说明:
+- 生产环境不向客户端暴露详细错误堆栈
+- 详细错误信息仅记录在服务端日志中
+"""
+
 import logging
 import traceback
 from typing import TypeVar

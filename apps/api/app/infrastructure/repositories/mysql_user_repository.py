@@ -1,4 +1,13 @@
-"""MySQL 用户仓储实现"""
+"""MySQL用户仓储实现模块
+
+本模块实现基于MySQL数据库的用户数据持久化。
+
+使用SQLAlchemy ORM进行数据库操作，支持:
+- 用户的创建、查询、更新
+- 密码和登录时间更新
+- 用户列表分页查询
+- 邮箱和用户名唯一性检查
+"""
 
 import logging
 from datetime import datetime
@@ -22,13 +31,34 @@ logger = logging.getLogger(__name__)
 
 
 class MySQLUserRepository(UserRepository):
-    """MySQL 用户仓储实现"""
+    """MySQL用户仓储实现
+
+    将用户数据持久化到MySQL数据库中。
+    自动加载用户的角色和权限信息。
+
+    Attributes:
+        _session: SQLAlchemy异步会话
+    """
 
     def __init__(self, session: AsyncSession) -> None:
+        """初始化用户仓储
+
+        Args:
+            session: SQLAlchemy异步会话实例
+        """
         self._session = session
 
     def _model_to_user(self, model: UserModel) -> User:
-        """将 ORM 模型转换为领域模型"""
+        """将ORM模型转换为领域模型
+
+        自动加载关联的角色和权限信息。
+
+        Args:
+            model: 用户ORM模型
+
+        Returns:
+            用户领域模型
+        """
         roles = []
         for user_role in model.roles:
             role_model = user_role.role

@@ -1,4 +1,34 @@
-"""用户管理 API 路由"""
+"""用户管理 API 路由模块
+
+本模块提供用户管理相关的 API 端点，支持用户自助操作和管理员管理功能。
+
+主要功能:
+- 当前用户信息获取和资料更新
+- 密码修改
+- 用户 CRUD 操作（管理员）
+- 用户角色分配和移除（管理员）
+- 角色列表和权限查询
+
+API 端点分组:
+1. 用户自助操作 (/users/me):
+   - GET /users/me: 获取当前用户信息
+   - PUT /users/me: 更新个人资料
+   - PUT /users/me/password: 修改密码
+
+2. 用户管理（管理员）:
+   - POST /users: 创建用户
+   - GET /users: 用户列表
+   - GET /users/{user_id}: 用户详情
+   - PUT /users/{user_id}: 更新用户
+   - DELETE /users/{user_id}: 删除用户
+   - PUT /users/{user_id}/roles: 分配角色
+   - DELETE /users/{user_id}/roles/{role_name}: 移除角色
+
+3. 角色权限查询 (/roles):
+   - GET /roles: 角色列表
+   - GET /roles/{role_id}/permissions: 角色权限
+   - POST /roles/{role_id}/permissions: 分配权限（管理员）
+"""
 
 import logging
 from typing import Annotated
