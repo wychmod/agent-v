@@ -83,6 +83,7 @@ dependencies = [
     { name = "greenlet" },
     { name = "httpx" },
     { name = "itsdangerous" },
+    { name = "json-repair" },
     { name = "openai" },
     { name = "pydantic", extra = ["email"] },
     { name = "pydantic-settings" },
@@ -118,6 +119,7 @@ requires-dist = [
     { name = "greenlet", specifier = ">=3.0.0" },
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "itsdangerous", specifier = ">=2.2.0" },
+    { name = "json-repair", specifier = ">=0.58.7" },
     { name = "openai", specifier = ">=2.16.0" },
     { name = "pydantic", extras = ["email"], specifier = ">=2.12.5" },
     { name = "pydantic-settings", specifier = ">=2.12.0" },
@@ -585,6 +587,15 @@ wheels = [
     { url = "https://mirrors.cloud.tencent.com/pypi/packages/85/15/d6eb3b770f6a0d332675141ab3962fd4a7c270ede3515d9f3583e1d28276/jiter-0.12.0-graalpy312-graalpy250_312_native-macosx_11_0_arm64.whl", hash = "sha256:89163163c0934854a668ed783a2546a0617f71706a2551a4a0666d91ab365d6b" },
     { url = "https://mirrors.cloud.tencent.com/pypi/packages/8c/3e/e7e06743294eea2cf02ced6aa0ff2ad237367394e37a0e2b4a1108c67a36/jiter-0.12.0-graalpy312-graalpy250_312_native-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:d96b264ab7d34bbb2312dedc47ce07cd53f06835eacbc16dde3761f47c3a9e7f" },
     { url = "https://mirrors.cloud.tencent.com/pypi/packages/2f/9c/6753e6522b8d0ef07d3a3d239426669e984fb0eba15a315cdbc1253904e4/jiter-0.12.0-graalpy312-graalpy250_312_native-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:c24e864cb30ab82311c6425655b0cdab0a98c5d973b065c66a3f020740c2324c" },
+]
+
+[[package]]
+name = "json-repair"
+version = "0.58.7"
+source = { registry = "https://pypi.doubanio.com/simple/" }
+sdist = { url = "https://mirrors.cloud.tencent.com/pypi/packages/7b/68/119efc8f5f9fc8cf4f35bbfe28c5b84a14e237be4647a53cb29390e06102/json_repair-0.58.7.tar.gz", hash = "sha256:2ea5c841cc1d91dbbe79e9ed4b2b77a5cc04d20892d62a15261b70ce999ec758" }
+wheels = [
+    { url = "https://mirrors.cloud.tencent.com/pypi/packages/2a/70/1c3d2304b7972a3e9430f1672b4fe20061c0ffc56662ad7c63d0e77a7d1a/json_repair-0.58.7-py3-none-any.whl", hash = "sha256:af0c7ff6a2ddd80bb1e7e6121c1a86d8bb57a539aa211acbfb25c64087b7116f" },
 ]
 
 [[package]]

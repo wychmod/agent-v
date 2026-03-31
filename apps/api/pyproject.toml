@@ -28,6 +28,7 @@ dependencies = [
     "itsdangerous>=2.2.0",
     "tzdata>=2025.1",
     "types-pyyaml>=6.0.12.20250915",
+    "json-repair>=0.58.7",
 ]
 
 [[tool.uv.index]]
